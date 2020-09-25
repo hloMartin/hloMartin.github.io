@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="一：制作纯净包目录提供给游戏的是聚合了怪猫 SDK 的聚合 SDK。所以拿到 CP 放接了聚合 SDK 的游戏包后，第一步就是制作一个纯净包目录（不包含渠道 SDK 相关文件） 第一步，首先通过 apktool 工具反编译游戏包（game.apk）">
+<meta property="og:type" content="article">
+<meta property="og:title" content="聚合渠道包制作流程">
+<meta property="og:url" content="http://example.com/2017/10/15/%E8%81%9A%E5%90%88%E6%B8%A0%E9%81%93%E5%8C%85%E5%88%B6%E4%BD%9C%E6%B5%81%E7%A8%8B/index.html">
+<meta property="og:site_name" content="JUST DO IT">
+<meta property="og:description" content="一：制作纯净包目录提供给游戏的是聚合了怪猫 SDK 的聚合 SDK。所以拿到 CP 放接了聚合 SDK 的游戏包后，第一步就是制作一个纯净包目录（不包含渠道 SDK 相关文件） 第一步，首先通过 apktool 工具反编译游戏包（game.apk）">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2017-10-14T16:00:00.000Z">
+<meta property="article:modified_time" content="2020-09-25T03:30:50.064Z">
+<meta property="article:author" content="Martin">
+<meta property="article:tag" content="聚合">
+<meta property="article:tag" content="sdk">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2017/10/15/%E8%81%9A%E5%90%88%E6%B8%A0%E9%81%93%E5%8C%85%E5%88%B6%E4%BD%9C%E6%B5%81%E7%A8%8B/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>聚合渠道包制作流程 | JUST DO IT</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">JUST DO IT</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2017/10/15/%E8%81%9A%E5%90%88%E6%B8%A0%E9%81%93%E5%8C%85%E5%88%B6%E4%BD%9C%E6%B5%81%E7%A8%8B/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Martin">
+      <meta itemprop="description" content="Take It Easy">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JUST DO IT">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          聚合渠道包制作流程
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2017-10-15 00:00:00" itemprop="dateCreated datePublished" datetime="2017-10-15T00:00:00+08:00">2017-10-15</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%89%93%E5%8C%85/" itemprop="url" rel="index"><span itemprop="name">打包</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2017/10/15/%E8%81%9A%E5%90%88%E6%B8%A0%E9%81%93%E5%8C%85%E5%88%B6%E4%BD%9C%E6%B5%81%E7%A8%8B/" class="post-meta-item leancloud_visitors" data-flag-title="聚合渠道包制作流程" title="Views">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">Views: </span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="一：制作纯净包目录"><a href="#一：制作纯净包目录" class="headerlink" title="一：制作纯净包目录"></a>一：制作纯净包目录</h2><h4 id="提供给游戏的是聚合了怪猫-SDK-的聚合-SDK。所以拿到-CP-放接了聚合-SDK-的游戏包后，第一步就是制作一个纯净包目录（不包含渠道-SDK-相关文件）"><a href="#提供给游戏的是聚合了怪猫-SDK-的聚合-SDK。所以拿到-CP-放接了聚合-SDK-的游戏包后，第一步就是制作一个纯净包目录（不包含渠道-SDK-相关文件）" class="headerlink" title="提供给游戏的是聚合了怪猫 SDK 的聚合 SDK。所以拿到 CP 放接了聚合 SDK 的游戏包后，第一步就是制作一个纯净包目录（不包含渠道 SDK 相关文件）"></a>提供给游戏的是聚合了怪猫 SDK 的聚合 SDK。所以拿到 CP 放接了聚合 SDK 的游戏包后，第一步就是制作一个纯净包目录（不包含渠道 SDK 相关文件）</h4><ul>
+<li><p>第一步，首先通过 apktool 工具反编译游戏包（game.apk）</p>
+<a id="more"></a>
+
+ <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">apktool d game.apk</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>第二步，清除怪猫 SDK 相关文件。</p>
+<pre><code> . 修改 AndroidManifest.xml 文件
+ . 删除 assets 目录下相关文件
+ . 删除 libs 目录下相关文件
+ . 删除 res 目录下相关文件
+ . 删除 unknown 目录和 smali 目录下的怪猫 SDK 的相关代码（这个需要注意，一定要确定是怪猫的才能删除，如果不确定就不去删除，相对来说，代码污染也比游戏崩掉好些）</code></pre>
+<p> NOTE：千万不要误删游戏相关文件，尤其是  res 目录比较容易误删。一般怪猫 SDK 需要删除的东西是固定，除非怪猫 SDK 更新了版本。</p>
+</li>
+</ul>
+<h2 id="二：生成指定渠道-apk"><a href="#二：生成指定渠道-apk" class="headerlink" title="二：生成指定渠道 apk"></a>二：生成指定渠道 apk</h2><h4 id="导入指定渠道-SDK-的文件，相关文件可以通过-apktool-反编译渠道-SDK-的-demo-apk-获取"><a href="#导入指定渠道-SDK-的文件，相关文件可以通过-apktool-反编译渠道-SDK-的-demo-apk-获取" class="headerlink" title="导入指定渠道 SDK 的文件，相关文件可以通过 apktool 反编译渠道 SDK 的 demo apk 获取"></a>导入指定渠道 SDK 的文件，相关文件可以通过 apktool 反编译渠道 SDK 的 demo apk 获取</h4><ul>
+<li><p>第一步，反编译渠道 SDK demo apk</p>
+  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">apktool d demo.apk</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>第二步，复制渠道 SDK 的相关文件到纯净包里（这里最好复制一份纯净包进行操作，以便后面的渠道包出包）。</p>
+<pre><code>. 根据 Demo 里面的 AndroidManifest.xml 修改纯净包里的 AndroidManifest.xml
+. 复制 Demo assets 目录下的相关文件到纯净包的 assets 目录
+. 复制 Demo libs 目录下的相关文件到纯净包的 libs 目录
+. 复制 Demo res 目录下的相关文件到纯净包的 res 目录
+. 复制 Demo unknown 目录和 smali 目录到纯净包的根目录下（相同路径下的文件会覆盖）</code></pre>
+</li>
+</ul>
+<h4 id="生成渠道-apk"><a href="#生成渠道-apk" class="headerlink" title="生成渠道 apk"></a>生成渠道 apk</h4><pre><code>  资源文件准备好了之后，就可以通过 apktool 编译 apk 了。</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">apktool b demo</span><br></pre></td></tr></table></figure>
+
+<pre><code>  在 demo/dist 目录下找到生成的 apk，然后对 apk 签名即可</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">jarsigner -keystore *** -storepass *** -signedjar dist.apk -digestalg SHA1 -sigalg MD5withRSA  demo.apk ***</span><br></pre></td></tr></table></figure>
+
+<pre><code>  NOTE:
+  . 第一个 *** 代表你的 keystore 文件
+  . 第二个 *** 代表你的 keystore 密码
+  . 第三个 *** 代表你的 alias 名字</code></pre>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E8%81%9A%E5%90%88/" rel="tag"># 聚合</a>
+              <a href="/tags/sdk/" rel="tag"># sdk</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2017/09/11/Android%20ANR/" rel="prev" title="Android ANR 小结">
+      <i class="fa fa-chevron-left"></i> Android ANR 小结
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2017/10/26/%E7%AE%80%E8%BF%B0http%E5%92%8Chttps%E7%9A%84%E5%8C%BA%E5%88%AB/" rel="next" title="简述 HTTP 和 HTTPS 的区别">
+      简述 HTTP 和 HTTPS 的区别 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%EF%BC%9A%E5%88%B6%E4%BD%9C%E7%BA%AF%E5%87%80%E5%8C%85%E7%9B%AE%E5%BD%95"><span class="nav-number">1.</span> <span class="nav-text">一：制作纯净包目录</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%8F%90%E4%BE%9B%E7%BB%99%E6%B8%B8%E6%88%8F%E7%9A%84%E6%98%AF%E8%81%9A%E5%90%88%E4%BA%86%E6%80%AA%E7%8C%AB-SDK-%E7%9A%84%E8%81%9A%E5%90%88-SDK%E3%80%82%E6%89%80%E4%BB%A5%E6%8B%BF%E5%88%B0-CP-%E6%94%BE%E6%8E%A5%E4%BA%86%E8%81%9A%E5%90%88-SDK-%E7%9A%84%E6%B8%B8%E6%88%8F%E5%8C%85%E5%90%8E%EF%BC%8C%E7%AC%AC%E4%B8%80%E6%AD%A5%E5%B0%B1%E6%98%AF%E5%88%B6%E4%BD%9C%E4%B8%80%E4%B8%AA%E7%BA%AF%E5%87%80%E5%8C%85%E7%9B%AE%E5%BD%95%EF%BC%88%E4%B8%8D%E5%8C%85%E5%90%AB%E6%B8%A0%E9%81%93-SDK-%E7%9B%B8%E5%85%B3%E6%96%87%E4%BB%B6%EF%BC%89"><span class="nav-number">1.0.1.</span> <span class="nav-text">提供给游戏的是聚合了怪猫 SDK 的聚合 SDK。所以拿到 CP 放接了聚合 SDK 的游戏包后，第一步就是制作一个纯净包目录（不包含渠道 SDK 相关文件）</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%EF%BC%9A%E7%94%9F%E6%88%90%E6%8C%87%E5%AE%9A%E6%B8%A0%E9%81%93-apk"><span class="nav-number">2.</span> <span class="nav-text">二：生成指定渠道 apk</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AF%BC%E5%85%A5%E6%8C%87%E5%AE%9A%E6%B8%A0%E9%81%93-SDK-%E7%9A%84%E6%96%87%E4%BB%B6%EF%BC%8C%E7%9B%B8%E5%85%B3%E6%96%87%E4%BB%B6%E5%8F%AF%E4%BB%A5%E9%80%9A%E8%BF%87-apktool-%E5%8F%8D%E7%BC%96%E8%AF%91%E6%B8%A0%E9%81%93-SDK-%E7%9A%84-demo-apk-%E8%8E%B7%E5%8F%96"><span class="nav-number">2.0.1.</span> <span class="nav-text">导入指定渠道 SDK 的文件，相关文件可以通过 apktool 反编译渠道 SDK 的 demo apk 获取</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%94%9F%E6%88%90%E6%B8%A0%E9%81%93-apk"><span class="nav-number">2.0.2.</span> <span class="nav-text">生成渠道 apk</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Martin"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Martin</p>
+  <div class="site-description" itemprop="description">Take It Easy</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">8</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Learn Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://wanandroid.com/" title="https:&#x2F;&#x2F;wanandroid.com" rel="noopener" target="_blank">WanAndroid</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://hencoder.com/" title="https:&#x2F;&#x2F;hencoder.com" rel="noopener" target="_blank">HenCoder</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Martin</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+<script>
+  (function() {
+    function leancloudSelector(url) {
+      url = encodeURI(url);
+      return document.getElementById(url).querySelector('.leancloud-visitors-count');
+    }
+
+    function addCount(Counter) {
+      var visitors = document.querySelector('.leancloud_visitors');
+      var url = decodeURI(visitors.id);
+      var title = visitors.dataset.flagTitle;
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          if (results.length > 0) {
+            var counter = results[0];
+            leancloudSelector(url).innerText = counter.time + 1;
+            Counter('put', '/classes/Counter/' + counter.objectId, { time: { '__op': 'Increment', 'amount': 1 } })
+              .catch(error => {
+                console.error('Failed to save visitor count', error);
+              });
+          } else {
+              leancloudSelector(url).innerText = 'Counter not initialized! More info at console err msg.';
+              console.error('ATTENTION! LeanCloud counter has security bug, see how to solve it here: https://github.com/theme-next/hexo-leancloud-counter-security. \n However, you can still use LeanCloud without security, by setting `security` option to `false`.');
+            
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    function showTime(Counter) {
+      var visitors = document.querySelectorAll('.leancloud_visitors');
+      var entries = [...visitors].map(element => {
+        return decodeURI(element.id);
+      });
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url: { '$in': entries } })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          for (let url of entries) {
+            let target = results.find(item => item.url === url);
+            leancloudSelector(url).innerText = target ? target.time : 0;
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    let { app_id, app_key, server_url } = {"enable":true,"app_id":"wpwDW67X1QTfk2g2rSlI71rq-gzGzoHsz","app_key":"gkjRvMfmoQc0gPQ2InWO7weL","server_url":null,"security":true};
+    function fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${api_server}/1.1${url}`, {
+          method,
+          headers: {
+            'X-LC-Id'     : app_id,
+            'X-LC-Key'    : app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      if (CONFIG.page.isPost) {
+        if (CONFIG.hostname !== location.hostname) return;
+        addCount(Counter);
+      } else if (document.querySelectorAll('.post-title-link').length >= 1) {
+        showTime(Counter);
+      }
+    }
+
+    let api_server = app_id.slice(-9) !== '-MdYXbMMI' ? server_url : `https://${app_id.slice(0, 8).toLowerCase()}.api.lncldglobal.com`;
+
+    if (api_server) {
+      fetchData(api_server);
+    } else {
+      fetch('https://app-router.leancloud.cn/2/route?appId=' + app_id)
+        .then(response => response.json())
+        .then(({ api_server }) => {
+          fetchData('https://' + api_server);
+        });
+    }
+  })();
+</script>
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

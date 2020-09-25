@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="概述HTTP 和 HTTPS 都属于应用层协议。HTTP 是不安全的，而 HTTPS 是安全的。 HTTP 不安全的原因为什么 HTTP 是不安全的？">
+<meta property="og:type" content="article">
+<meta property="og:title" content="简述 HTTP 和 HTTPS 的区别">
+<meta property="og:url" content="http://example.com/2017/10/26/%E7%AE%80%E8%BF%B0http%E5%92%8Chttps%E7%9A%84%E5%8C%BA%E5%88%AB/index.html">
+<meta property="og:site_name" content="JUST DO IT">
+<meta property="og:description" content="概述HTTP 和 HTTPS 都属于应用层协议。HTTP 是不安全的，而 HTTPS 是安全的。 HTTP 不安全的原因为什么 HTTP 是不安全的？">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2017-10-25T16:00:00.000Z">
+<meta property="article:modified_time" content="2020-09-25T03:30:50.064Z">
+<meta property="article:author" content="Martin">
+<meta property="article:tag" content="http">
+<meta property="article:tag" content="https">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2017/10/26/%E7%AE%80%E8%BF%B0http%E5%92%8Chttps%E7%9A%84%E5%8C%BA%E5%88%AB/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>简述 HTTP 和 HTTPS 的区别 | JUST DO IT</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">JUST DO IT</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2017/10/26/%E7%AE%80%E8%BF%B0http%E5%92%8Chttps%E7%9A%84%E5%8C%BA%E5%88%AB/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Martin">
+      <meta itemprop="description" content="Take It Easy">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="JUST DO IT">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          简述 HTTP 和 HTTPS 的区别
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2017-10-26 00:00:00" itemprop="dateCreated datePublished" datetime="2017-10-26T00:00:00+08:00">2017-10-26</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%BD%91%E7%BB%9C/" itemprop="url" rel="index"><span itemprop="name">网络</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2017/10/26/%E7%AE%80%E8%BF%B0http%E5%92%8Chttps%E7%9A%84%E5%8C%BA%E5%88%AB/" class="post-meta-item leancloud_visitors" data-flag-title="简述 HTTP 和 HTTPS 的区别" title="Views">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">Views: </span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h3><p>HTTP 和 HTTPS 都属于应用层协议。HTTP 是不安全的，而 HTTPS 是安全的。</p>
+<h3 id="HTTP-不安全的原因"><a href="#HTTP-不安全的原因" class="headerlink" title="HTTP 不安全的原因"></a>HTTP 不安全的原因</h3><p>为什么 HTTP 是不安全的？</p>
+<a id="more"></a>
+
+<p>通过 HTTP 协议传输的内容都是明文的，当你提交数据后，数据在到达指定服务器之前，有可能会经历一段很长的路。路上会经历很多关卡，比如路由器的所有者，网线途径路线上的不明意图者，运营商。。。等等，他们都能看到你的数据。他们中的任何人如果想要查看你发送的数据内容，都是轻而易举的。所以当你输入用户名，密码等敏感信息并提交后，这些信息都能被窃取。由此可见 HTTP 协议是不安全的。</p>
+<h3 id="HTTPS-为什么是安全的"><a href="#HTTPS-为什么是安全的" class="headerlink" title="HTTPS 为什么是安全的"></a>HTTPS 为什么是安全的</h3><p>HTTP 不安全的原因是因为它传输的内容都是明文的，那么想要安全，就需要对传输内容进行加密。</p>
+<p>HTTPS 协议传输的内容就是加密的，即使被第三方截取到了，也很难破解出加密内容。所以 HTTPS 是安全的协议。</p>
+<h3 id="HTTPS-是如何做到安全的"><a href="#HTTPS-是如何做到安全的" class="headerlink" title="HTTPS 是如何做到安全的"></a>HTTPS 是如何做到安全的</h3><h4 id="加密方式"><a href="#加密方式" class="headerlink" title="加密方式"></a>加密方式</h4><p>在这之前需要简单了解一下基础密码学。对信息的加密普遍分为 2 种：</p>
+<ul>
+<li><p>对称加密：加密和解密使用的密钥是相同的，只存在一个密钥</p>
+</li>
+<li><p>非对称加密：加密和解密使用的密钥是不同的（分为公钥和私钥，公钥加密的信息可以用私钥解密，私钥加密的信息可以用公钥解密）,公钥一般是开放出去的，大家都可以知道，私钥只能自己知道。这样用公钥加密的信息，只有自己能够解密。</p>
+</li>
+</ul>
+<h4 id="HTTPS-内容加密"><a href="#HTTPS-内容加密" class="headerlink" title="HTTPS 内容加密"></a>HTTPS 内容加密</h4><p>HTTPS 是 HTTP 协议 + SSL/TLS 协议的组合。可以理解为 HTTPS 就是使用 SSL/TLS 协议帮助 HTTP 实现加密传输。</p>
+<p>那么对传输内容的加密方式如何选择？选择对称加密还是非对称加密？</p>
+<p>HTTPS 选择的是对称加密。这牵扯到了加密算法的效率问题，对称加密的效率要显著高于非对称加密。HTTPS 为了保证信息传递的高速特性，选择了对称加密。发送方和接收方都有同一个密钥，发送方用密钥加密传输内容，接收方接受到内容后，用密钥解密得到发送方发送的内容，实现对传输内容的保护。</p>
+<h4 id="对称加密密钥的安全保护"><a href="#对称加密密钥的安全保护" class="headerlink" title="对称加密密钥的安全保护"></a>对称加密密钥的安全保护</h4><p>传输内容加密完成了，但是问题也随着而来，如何保证发送方和接受方都持有同一个密钥，并且不被别人知道这个密钥呢。这里就需要使用到非对称加密了。</p>
+<p>HTTPS 协议在传输内容之前，会先建立起一个安全连接，然后再来传送数据。</p>
+<p>什么叫建立安全连接呢？其实所谓建立安全连接的过程，就是如何安全传送对称加密密钥的过程。</p>
+<p>这里 A 代表发送方，B 代表接收方，KEY 代表对称加密的密钥，其中 B 有私钥和公钥。简单描述一下建立安全连接的过程：</p>
+<p>  1：A 向 B 发送一次 SSL 通信请求（SSL 通信请求可以看成是带有特殊标记的请求，B 通过这个标记知道 A 想要和 B 通信的意图）</p>
+<p>  2：B 收到 A 的 SSL 请求后，知道 A 想要和他通信。于是 B 把自己的公钥返回给了 A</p>
+<p>  3：A 收到 B 的公钥后，把 KEY 通过 B 的公钥加密，然后发送给 B</p>
+<p>  4：B 收到加密后的信息，用自己的私钥解密得到了 KEY，然后通知 A 我已经拿到 KYE 了</p>
+<p>  5：A 收到了 B 的消息时，安全连接就已经建立完成。从此 A 和 B 就可以使用 KEY 对传输内容进行加密了</p>
+<p>  可以看到通过 非对称加密 传送 对称加密的密钥 KEY，实现了 KEY 只有 A 和 B 知道，建立起了安全的通信连接。</p>
+<h4 id="证书的作用"><a href="#证书的作用" class="headerlink" title="证书的作用"></a>证书的作用</h4><p>SSL 这一套加密解密的方式看起来非常完美，但是总有人想要去破解它，于是有人发现了一种方式可以完美的绕开 SSL，这种方式可以描述为中间者的欺骗。</p>
+<p>再来回顾一遍 HTTPS 安全连接的建立过程，不过这次加上中间者 C 并且 C 有自己的公钥和私钥。<br>看看 C 是如何完美的破解 SSL 的加密解密流程。</p>
+<p>  1：A 向 B 发送一次 SSL 通信请求，但是请求被 C 给截取了</p>
+<p>  2：C 原封不动的把 A 的请求发送给了 B</p>
+<p>  3：B 收到 C 的 SSL 请求后， B 把自己的公钥返回给了 C</p>
+<p>  4：C 收到 B 的公钥后，这时候 C 把 B 的公钥保存起来，然后把自己的公钥传给了 A</p>
+<p>  5：A 收到 C 的公钥后，把 KEY 通过 C 的公钥加密，然后发送给 C</p>
+<p>  6：C 收到 A 的加密信息，用自己的私钥解密后得到了 KEY，然后通过 B 的公钥又来加密 KEY，并发送给 B</p>
+<p>  7：B 收到加密后的信息，用自己的私钥解密得到了 KEY，然后通知 C 我已经拿到 KYE 了。</p>
+<p>  8：C 收到了 B 的消息后的同时也把消息传递给 A 。此时连接建立完成，但是这个连接并不安全，因为 A B C 都拿到了 KEY，C 完全可以通过 KEY 去解密 A B 之间的通信内容。</p>
+<p>那怎么应对这种中间者的欺骗呢？</p>
+<p>这时候就衍生出了证书这一产物。证书是证明什么的呢？证书又是如何发挥作用的呢？</p>
+<p>  证书证明的是你的公钥的合法性。</p>
+<p>  证书是由权威的机构颁发的，用以证明这个公钥是你自己的并且合法的。上述过程中，C 全程充当 A 和 B 之间通信的一个中间传递者，但是有了证书之后 C 想要冒充 B，但是却没有 B 的证书，就没办法向 A 证明自己是 B 了，A 就会收到警告，那么 A 就知道有人在冒充 B 和他通信了。</p>
+<p>这样中间者的欺骗就被识破了。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/http/" rel="tag"># http</a>
+              <a href="/tags/https/" rel="tag"># https</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2017/10/15/%E8%81%9A%E5%90%88%E6%B8%A0%E9%81%93%E5%8C%85%E5%88%B6%E4%BD%9C%E6%B5%81%E7%A8%8B/" rel="prev" title="聚合渠道包制作流程">
+      <i class="fa fa-chevron-left"></i> 聚合渠道包制作流程
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2017/11/21/Android_Handler%E5%8E%9F%E7%90%86%E7%AE%80%E8%BF%B0/" rel="next" title="带着问题看 Handler">
+      带着问题看 Handler <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A6%82%E8%BF%B0"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#HTTP-%E4%B8%8D%E5%AE%89%E5%85%A8%E7%9A%84%E5%8E%9F%E5%9B%A0"><span class="nav-number">2.</span> <span class="nav-text">HTTP 不安全的原因</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#HTTPS-%E4%B8%BA%E4%BB%80%E4%B9%88%E6%98%AF%E5%AE%89%E5%85%A8%E7%9A%84"><span class="nav-number">3.</span> <span class="nav-text">HTTPS 为什么是安全的</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#HTTPS-%E6%98%AF%E5%A6%82%E4%BD%95%E5%81%9A%E5%88%B0%E5%AE%89%E5%85%A8%E7%9A%84"><span class="nav-number">4.</span> <span class="nav-text">HTTPS 是如何做到安全的</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8A%A0%E5%AF%86%E6%96%B9%E5%BC%8F"><span class="nav-number">4.1.</span> <span class="nav-text">加密方式</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#HTTPS-%E5%86%85%E5%AE%B9%E5%8A%A0%E5%AF%86"><span class="nav-number">4.2.</span> <span class="nav-text">HTTPS 内容加密</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AF%B9%E7%A7%B0%E5%8A%A0%E5%AF%86%E5%AF%86%E9%92%A5%E7%9A%84%E5%AE%89%E5%85%A8%E4%BF%9D%E6%8A%A4"><span class="nav-number">4.3.</span> <span class="nav-text">对称加密密钥的安全保护</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%AF%81%E4%B9%A6%E7%9A%84%E4%BD%9C%E7%94%A8"><span class="nav-number">4.4.</span> <span class="nav-text">证书的作用</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Martin"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Martin</p>
+  <div class="site-description" itemprop="description">Take It Easy</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">8</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Learn Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://wanandroid.com/" title="https:&#x2F;&#x2F;wanandroid.com" rel="noopener" target="_blank">WanAndroid</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://hencoder.com/" title="https:&#x2F;&#x2F;hencoder.com" rel="noopener" target="_blank">HenCoder</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Martin</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+<script>
+  (function() {
+    function leancloudSelector(url) {
+      url = encodeURI(url);
+      return document.getElementById(url).querySelector('.leancloud-visitors-count');
+    }
+
+    function addCount(Counter) {
+      var visitors = document.querySelector('.leancloud_visitors');
+      var url = decodeURI(visitors.id);
+      var title = visitors.dataset.flagTitle;
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          if (results.length > 0) {
+            var counter = results[0];
+            leancloudSelector(url).innerText = counter.time + 1;
+            Counter('put', '/classes/Counter/' + counter.objectId, { time: { '__op': 'Increment', 'amount': 1 } })
+              .catch(error => {
+                console.error('Failed to save visitor count', error);
+              });
+          } else {
+              leancloudSelector(url).innerText = 'Counter not initialized! More info at console err msg.';
+              console.error('ATTENTION! LeanCloud counter has security bug, see how to solve it here: https://github.com/theme-next/hexo-leancloud-counter-security. \n However, you can still use LeanCloud without security, by setting `security` option to `false`.');
+            
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    function showTime(Counter) {
+      var visitors = document.querySelectorAll('.leancloud_visitors');
+      var entries = [...visitors].map(element => {
+        return decodeURI(element.id);
+      });
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url: { '$in': entries } })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          for (let url of entries) {
+            let target = results.find(item => item.url === url);
+            leancloudSelector(url).innerText = target ? target.time : 0;
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    let { app_id, app_key, server_url } = {"enable":true,"app_id":"wpwDW67X1QTfk2g2rSlI71rq-gzGzoHsz","app_key":"gkjRvMfmoQc0gPQ2InWO7weL","server_url":null,"security":true};
+    function fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${api_server}/1.1${url}`, {
+          method,
+          headers: {
+            'X-LC-Id'     : app_id,
+            'X-LC-Key'    : app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      if (CONFIG.page.isPost) {
+        if (CONFIG.hostname !== location.hostname) return;
+        addCount(Counter);
+      } else if (document.querySelectorAll('.post-title-link').length >= 1) {
+        showTime(Counter);
+      }
+    }
+
+    let api_server = app_id.slice(-9) !== '-MdYXbMMI' ? server_url : `https://${app_id.slice(0, 8).toLowerCase()}.api.lncldglobal.com`;
+
+    if (api_server) {
+      fetchData(api_server);
+    } else {
+      fetch('https://app-router.leancloud.cn/2/route?appId=' + app_id)
+        .then(response => response.json())
+        .then(({ api_server }) => {
+          fetchData('https://' + api_server);
+        });
+    }
+  })();
+</script>
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
