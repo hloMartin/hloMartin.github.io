@@ -1,0 +1,370 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search>
+  <entry>
+    <title>Android ANR 小结</title>
+    <url>/2017/09/11/Android%20ANR/</url>
+    <content><![CDATA[<h3 id="ANR-介绍"><a href="#ANR-介绍" class="headerlink" title="ANR 介绍"></a>ANR 介绍</h3><p>ANR错误，是 Handler 发送延时消息，当处理及时，取消延时消息。处理不及时，延时消息（就是 ANR）就发送出去了，就会有 ANR 错误。</p>
+<a id="more"></a>
+
+<p>下面分别介绍一下会产生 ANR 错误的组件及相关介绍</p>
+<h3 id="BroadcastReceiver"><a href="#BroadcastReceiver" class="headerlink" title="BroadcastReceiver"></a>BroadcastReceiver</h3><p>ANR 超时时间：<br>    前台广播：10s<br>    后台广播：60s<br>    广播如何处理 ANR 错误：<br>        再次判断是否超时，记录日志，记录 ANR 次数等，然后继续调用 processNextBroadcast，处理下一条广播</p>
+<p>NOTE：广播的注册分为动态注册和静态注册，有序和无序。广播的执行分为串行执行和并发执行。<br>                并发执行是不会出现 ANR 的，因为它不要求有执行结果反馈。<br>                串行执行是可能出现 ANR 的，因为它要求有执行结果反馈，指定时间不反馈就会出现 ANR。</p>
+<h3 id="Service"><a href="#Service" class="headerlink" title="Service"></a>Service</h3><p>ANR 超时时间：<br>        SERVICE_TIMEOUT：20S<br>        SERVICE_BACKGROUND_TIMEOUT：200s<br>服务如何处理 ANR 错误:<br>        记录日志，清理 ANR 活动。</p>
+<h3 id="ContentProvider"><a href="#ContentProvider" class="headerlink" title="ContentProvider"></a>ContentProvider</h3><p>ANR 超时时间：<br>        CONTENT_PROVIDER_PUBLISH_TIMEOUT：10S<br>        CONTENT_PROVIDER_RETAIN_TIME：20S<br>ContentProvider 可以控制是否启动 ANR。</p>
+<h3 id="Application"><a href="#Application" class="headerlink" title="Application"></a>Application</h3><p>Application的启动是执行在主线程的，attachBaseContext和onCreate等回调也是在主线程的，这里如果出现ANR，会影响到当前组件的运行。</p>
+<h3 id="Activity"><a href="#Activity" class="headerlink" title="Activity"></a>Activity</h3><p>超时时间：<br>        KEY_DISPATCHING_TIMEOUT：5s<br>        INSTRUMENTATION_KEY_DISPATCHING_TIMEOUT ：60s<br>Activity 如何处理 ANR 错误：<br>        记录 ANR 日志，并会弹出 ANR 提示框。</p>
+<p>NOTE: Activity 是唯一一个在 ANR 错误时，会弹出提示框的，也是唯一一个会影响 APP 运行的。</p>
+<h3 id="部分补充"><a href="#部分补充" class="headerlink" title="部分补充"></a>部分补充</h3><p>ANR 错误是如何记录的？<br>        log日志记录在data/anr/traces.txt文件中，这个文件每次只记录最近的一次ANR，有可能记录失败。文件内容包括dump栈，CPU负载，IO Wait等</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>ANR</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Android View 的事件分发机制</title>
+    <url>/2017/08/03/Android%20View%20%E7%9A%84%E4%BA%8B%E4%BB%B6%E5%88%86%E5%8F%91%E6%9C%BA%E5%88%B6/</url>
+    <content><![CDATA[<h2 id="View-事件分发"><a href="#View-事件分发" class="headerlink" title="View 事件分发"></a>View 事件分发</h2><p>点击屏幕时，在手指按下和抬起间，会产生很多事件，down，move … move，up，这些事件是一个事件序列。</p>
+<h3 id="对事件的处理"><a href="#对事件的处理" class="headerlink" title="对事件的处理"></a>对事件的处理</h3><p>View 和 ViewGroup 对事件的处理是不一样的。</p>
+<a id="more"></a>
+
+<h4 id="View-对事件的处理"><a href="#View-对事件的处理" class="headerlink" title="View 对事件的处理"></a>View 对事件的处理</h4><p>当事件传递到 View 的时候，首先调用 view 的 dispatchTouchEvent 方法。</p>
+<p>View 的 dispatchTouchEvent 不再进行事件的分发了，因为事件已经找到了目标 view。这时候会执行以下操作。</p>
+<ol>
+<li><p>dispatchTouchEvent 首先会执行 onTouch 方法。如果 onTouch 返回 true，表明事件直接被消费，不再继续。如果 onTouch 返回 fasle 则表示不消费这个事件，事件会继续传递给 onTouchEvent 处理，并且 onTouchEvent 的返回也是 dispatchTouchEvent 的返回，只有 这个返回为 true，后续的相关事件才会继续传递过来。</p>
+</li>
+<li><p>在 onTouchEvent 会判断是否注册了 onClick 事件，有的话会直接消费掉事件，并返回 true。没有注册 onClick 事件，返回 false，事件未消费交由 parent 的 onTouch 处理。</p>
+</li>
+</ol>
+<h4 id="ViewGroup-对事件的处理"><a href="#ViewGroup-对事件的处理" class="headerlink" title="ViewGroup 对事件的处理"></a>ViewGroup 对事件的处理</h4><p>ViewGroup 相对于 View 来说，对于事件的处理复杂一点。因为它多了一个 onInterceptTouchEvent 方法。</p>
+<ol>
+<li><p>dispatchTouchEvent 首先判断 onInterceptTouchEvent （默认返回 false） 的返回值。如果为 true 表明 ViewGroup 拦截了事件，事件不再继续往子 View 传递。如果为 false，则会查找被点击子 View，找到了子 View，调用子 View.dispatchTouchEvent 方法进行事件派发。</p>
+</li>
+<li><p>在 onInterceptTouchEvent 返回 true 或者 查找不到被点击的子 View 的情况 或者 找到了子 View 但是子 View 的 dispatchTouchEvent 返回 false 的情况下，事件都将调用  super.dispatchTouchEvent，ViewGroup 的 super 就是 View，从上面 View 的 dispatchTouchEvent 可以看出，它将调用 ViewGroup 的 onTouch 方法，并根据 onTouch 的返回值，决定是否调用 onTouchEvent。这里也演示了子 View 不消费事件的时候，是如何把事件交由 parent 的。</p>
+</li>
+</ol>
+<h3 id="简述事件的捕捉"><a href="#简述事件的捕捉" class="headerlink" title="简述事件的捕捉"></a>简述事件的捕捉</h3><ol>
+<li><p>InputManagerService Read 线程捕捉事件，预处理后交给 Dispatcher 线程。</p>
+</li>
+<li><p>Dispatcher 线程找到目标窗口</p>
+</li>
+<li><p>通过 socket 将事件发送到 目标窗口</p>
+</li>
+<li><p>APP 被唤醒，找到目标窗口，处理事件。</p>
+</li>
+</ol>
+]]></content>
+      <categories>
+        <category>Android View</category>
+      </categories>
+      <tags>
+        <tag>触摸事件分发</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Android 内存泄漏相关</title>
+    <url>/2018/01/08/Android%20%E5%86%85%E5%AD%98%E6%B3%84%E6%BC%8F%E7%9A%84%E5%8E%9F%E5%9B%A0%E5%92%8C%E8%A7%A3%E5%86%B3%E6%80%9D%E8%B7%AF/</url>
+    <content><![CDATA[<h2 id="为什么会产生内存泄漏？"><a href="#为什么会产生内存泄漏？" class="headerlink" title="为什么会产生内存泄漏？"></a>为什么会产生内存泄漏？</h2><p>当一个对象 A 不再需要使用，本应该被 GC 回收的时候，另外一个正在使用的对象 B 持有了 A 的引用，导致了 A 不能及时的被回收掉，A 依旧存在内存里，这就导致了内存的泄漏</p>
+<h2 id="内存泄漏有什么影响？"><a href="#内存泄漏有什么影响？" class="headerlink" title="内存泄漏有什么影响？"></a>内存泄漏有什么影响？</h2><p>  对于 Android 应用来说，内存泄漏是造成 OOM 的主要原因之一。由于 Android 系统为每个 APP 分配的内存是有限的，APP 内如果发生的内存泄漏较多，导致 APP 可用内存越来越少，很容易发生内存溢出从而导致 APP 崩溃。</p>
+<a id="more"></a>
+
+<h2 id="如何检测和分析内存泄漏"><a href="#如何检测和分析内存泄漏" class="headerlink" title="如何检测和分析内存泄漏"></a>如何检测和分析内存泄漏</h2><p>内存泄漏发生在堆内存上，对于我们来说并不可见，所以需要借助一些工具来检测。常用的工具有 MAT，LeakCanary。<br>    1. MAT （没用过）<br>    2. LeakCanay（没用过）</p>
+<h2 id="常见的内存泄漏以及解决方法"><a href="#常见的内存泄漏以及解决方法" class="headerlink" title="常见的内存泄漏以及解决方法"></a>常见的内存泄漏以及解决方法</h2><h3 id="单例模式造成的内存泄漏"><a href="#单例模式造成的内存泄漏" class="headerlink" title="单例模式造成的内存泄漏"></a>单例模式造成的内存泄漏</h3><p>由于单例的静态特性使得其生命周期和应用的生命周期一样长，如果一个对象 A 已经不再需要被使用，但是被单例所持有，就会导致 A 不能被回收，从而导致了内存泄漏<br>在 Android 中最常见的就是单例模式传入了 Activity 的 Context。如果 Activity 不再需要，Activity 也不能被正常回收，<br>解决方法：不管传入什么 Context，最终使用的是  Application 的 Context。这样就不会发生内存泄漏了</p>
+<h3 id="创建了一个非静态内部类的静态实例造成的内存泄漏"><a href="#创建了一个非静态内部类的静态实例造成的内存泄漏" class="headerlink" title="创建了一个非静态内部类的静态实例造成的内存泄漏"></a>创建了一个非静态内部类的静态实例造成的内存泄漏</h3><p>在 Activity 内有一个非静态的内部类 A，并且有一个 A 的静态实例。由于 A 是静态变量，生命周期和应用的生命周期一样长。<br>而  A 是 Activity 的非静态内部类，A 会持有 Activity 的引用。这样就导致了，Activity 在可以被回收的时候，由于被 A 持有引用，而不能正常被回收，从而导致了内存泄漏。<br>解决方法：额。就是尽量避免这种情况。。。如果有需求可以将 A 设置成静态内部类，或者将 A 抽离出来，形成单例。</p>
+<h3 id="Handler-造成的内存泄漏"><a href="#Handler-造成的内存泄漏" class="headerlink" title="Handler 造成的内存泄漏"></a>Handler 造成的内存泄漏</h3><p>Android UI 线程不能做耗时操作（联网请求等），如果需要执行的话，会用到 Handler （当然不是唯一的方法）。<br>Handler 消息机制，主线程创建一个 Handler 实例后，Handler 会绑定主线程的 Looper 和 MessageQueue。<br>Handler 发送 Message 到 MessageQueue，Message 会携带 Handler 的引用。<br>当 Looper 从 MessageQueue 取出 Message 的时候，会通过 Message 携带的 Handler 引用，调用 Handler 的处理方法。<br>所以只要 MessageQueue 里还有未处理的 Message，那么 Handler 就会一直被 Message 持有引用，而 Handler 是 Activity 的匿名内部类，Handler 持有 Activity 的引用。<br>所以只要消息没有被处理完，Activity 就不能被回收，这样就很大几率造成了内存泄漏了。<br>解决方法：将 Handler 类改成静态内部类，就可以避免内存泄漏了（还有弱引用的方式，GC 回收的时候会忽略弱引用，强制回收）</p>
+<h3 id="线程造成的泄漏"><a href="#线程造成的泄漏" class="headerlink" title="线程造成的泄漏"></a>线程造成的泄漏</h3><p>原理和 Handler 造成的内存泄漏一致，AsyncTask 和 Runnable 的使用一般都是匿名内部类，如果线程中的任务未完成，Activity 销毁了。Activity 也不能被 GC 回收。<br>解决方法：将 AsyncTask 和 Runnable 设置成静态内部类。</p>
+<h3 id="资源未关闭造成的内存泄漏"><a href="#资源未关闭造成的内存泄漏" class="headerlink" title="资源未关闭造成的内存泄漏"></a>资源未关闭造成的内存泄漏</h3><p>对于 BroadcastReceiver，ContentObserver，File，Cursor，Streamd 等资源应该在 Activity 销毁的时候及时释放，关闭或注销。</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>内存</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>带着问题看 Handler</title>
+    <url>/2017/11/21/Android_Handler%E5%8E%9F%E7%90%86%E7%AE%80%E8%BF%B0/</url>
+    <content><![CDATA[<h3 id="Handler-机制是怎么样的？"><a href="#Handler-机制是怎么样的？" class="headerlink" title="Handler 机制是怎么样的？"></a>Handler 机制是怎么样的？</h3><p>Handler 是 Android 中重要的消息机制，可以方便的实现事件的传递，事件的延时处理，线程间的通信。</p>
+<p>三个重要的角色 Handler，Looper，MessageQueue 加上一个 Message 对象。</p>
+<ul>
+<li>Handler：负责向 MessageQueue 发送消息；等待 Looper 的调用然后处理消息。</li>
+<li>Looper：开启一个死循环，持有当前线程的 MessageQueue，通过 MessageQueue 的 next() 方法，阻塞等待消息，处理消息。</li>
+<li>MessageQueue：维持一个消息队列（链表实现），实现 Message 的先入先出（但不是绝对的）</li>
+<li>Message： 消息对象，分为异步消息和同步消息。异步消息加上同步屏障消息，可以实现异步消息的优先执行。</li>
+</ul>
+<a id="more"></a>
+
+<h3 id="post-和-sendMessage-的区别？"><a href="#post-和-sendMessage-的区别？" class="headerlink" title="post 和 sendMessage 的区别？"></a>post 和 sendMessage 的区别？</h3><p>post 传入一个 Runnable 对象，会在后面生成一个 message，并将 Runnable 对象赋值给 message 的 callback ，所以 message 的 callback 字段不为空。</p>
+<p>sendMessage 直接传入的是一个 message 对象，message 对象的 callback 是空的。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#x2F;&#x2F;Handler 处理消息的代码</span><br><span class="line">public void dispatchMessage(@NonNull Message msg) &#123;</span><br><span class="line">        if (msg.callback !&#x3D; null) &#123;</span><br><span class="line">            handleCallback(msg);</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            if (mCallback !&#x3D; null) &#123;</span><br><span class="line">                if (mCallback.handleMessage(msg)) &#123;</span><br><span class="line">                    return;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">            handleMessage(msg);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>可以看出针对 message 的 callback 是否为空，处理是不一样的。</p>
+<ul>
+<li>不为空，执行 callback(Runnable 对象)</li>
+<li>为空，还要判断 handler 的 mCallback(这个是 new Hander 的时候可以传进来的) 是否为空?<ul>
+<li>不为空，调用 handler 的 mCallback 来处理</li>
+<li>为空，则调用 handler 的 handleMessage 去处理消息</li>
+</ul>
+</li>
+</ul>
+<h3 id="Looper-的死循环，为什么不会让-app-卡死？"><a href="#Looper-的死循环，为什么不会让-app-卡死？" class="headerlink" title="Looper 的死循环，为什么不会让 app 卡死？"></a>Looper 的死循环，为什么不会让 app 卡死？</h3><p>熟悉 Handler 机制的人应该知道 Looper 的死循环正是 app 存活下去的根本原因。</p>
+<p>如果 Looper 没有死循环了，那么主线程就会往下执行，直到主线程结束。那么此时 app 要么进程结束，要么卡死（因为主线程不会响应任何操作，没法更新界面）。</p>
+<p>追寻 Looper 的死循环可以发现它是通过 nativePollOnce 这个本地方法阻塞实现的。nativePollOnce 会阻塞方法，并且会释放 CPU 资源，让线程进入休眠状态。<br>所以也不用担心死循环会耗尽 cpu 的资源，导致 app 卡死。</p>
+<h3 id="handler-的延时消息，如何实现"><a href="#handler-的延时消息，如何实现" class="headerlink" title="handler 的延时消息，如何实现?"></a>handler 的延时消息，如何实现?</h3><p>message 在入队列的时候，都会对 when 字段赋值，然后以 when 作为依据，决定 message 在队列中的位置。<br>nativePollOnce 方法接受一个时间参数，它代表着线程会在阻塞多久后恢复，-1 代表着一直阻塞。</p>
+<p>我们讨论只发送一个延时消息的情况。</p>
+<pre><code>当我们发送一个延时消息的时候，通过 nativePollOnce 阻塞的线程会被 nativeWake 方法唤醒。
+拿到这个延时消息，发现这个消息的执行时间( when )还没到。
+算一下这个消息还要等待多久，并赋值给 nextPollTimeoutMillis 变量。
+nextPollTimeoutMillis 作为参数传递给 nativePollOnce 方法，线程进入阻塞。
+在 nextPollTimeoutMillis 时长后线程恢复，取出 message。
+对比 message 的 when 字段，发现时间到了，返回消息交给 Looper 处理。</code></pre>
+<h3 id="iDHandler-闲时机制如何触发的？"><a href="#iDHandler-闲时机制如何触发的？" class="headerlink" title="iDHandler 闲时机制如何触发的？"></a>iDHandler 闲时机制如何触发的？</h3><p>阅读 messsageQueue 的 next 方法可以看到，当队列中没有消息需要处理了，或者下一个处理的消息是一个延时消息时，就会去检查 mIdleHandlers 是否有需要处理的任务。<br>有任务就循环执行任务，直到所有任务执行完毕。因为不知道执行完这些闲时任务需要花费多久，所以会重置 nextPollTimeoutMillis 为 0，立马重新判断一下当前是否有消息需要处理，如果消息是延时消息，重新计算一下延时消息的剩余等待时长。</p>
+<p>可以看到 mIdleHandlers 是在主线程空闲的时候才会触发执行，所以称为闲时机制。</p>
+<p>由于闲时机制触发的时候，会循环执行完所有的闲时任务，才会进入下一次的阻塞，所以闲时任务不宜过多，且不能是耗时操作，否则会阻塞 UI 线程，导致 app 卡顿。</p>
+<h3 id="handler-的同步屏障，同步消息，异步消息？"><a href="#handler-的同步屏障，同步消息，异步消息？" class="headerlink" title="handler 的同步屏障，同步消息，异步消息？"></a>handler 的同步屏障，同步消息，异步消息？</h3><pre><code>Message 通过一个标记可以区分为：同步消息，异步消息。
+Message 还可以通过它的 target 是否为空分为：普通消息（非空），同步屏障消息（空）</code></pre>
+<p>UI 线程会处理很多的消息，有一些消息比较重要，需要优先处理，所以就有了一个同步屏障机制。</p>
+<p>同步屏障机制这个名字很形象，阻拦同步消息，只处理异步消息。所以说异步消息的优先级比较高，那么怎么发送一个异步消息呢？</p>
+<pre><code>Message 有一个 setAsynchronous(async) 方法，可以直接设置消息是否是异步的。
+Handler 有很多的构造方法，有的构造方法携带 async 参数，并且会赋值给 mAsynchronous 变量。
+Handler 在将消息入队列之前，会判断如果 mAsynchronous 为 true，就会调用 msg.setAsynchronous(async)。
+所以如果构成了一个 async 为 true 的 Handler，那么该 Handler 发送的所有消息都是异步的。
+如果构造了一个 async 为 false 的 Handler，该 Handler 会维持消息原有的同步异步属性。</code></pre>
+<p>如果只发送异步消息，还提升不了异步消息的优先级。在发送异步消息之前，需要先发送一个同步屏障消息，相当于加了一个栏杆，阻拦同步消息，只让异步消息通过。<br>所以在处理完异步消息后，一定要记得移除同步消息屏障，否则队列里的同步消息就永远无法执行了。</p>
+<p>上面是同步屏障机制的大体流程，具体是怎么实现的？</p>
+<p>阅读 MeesageQueue 的 next 方法可以看到，从队列中取出消息后，都会先判断当前消息的 target 是否为空（即是否为同步屏障消息）。target 如果为空，则遍历队列，查找异步消息进行处理。如果异步消息都处理完了，nextPollTimeoutMillis 会置为 -1，线程阻塞进入休眠状态。此时同步消息是无法得到处理的，直到 target 为 null 的消息被移除为止。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#x2F;&#x2F;MessageQueue 下</span><br><span class="line">&#x2F;&#x2F;发送同步消息屏障</span><br><span class="line">Int token &#x3D; postSyncBarrier() </span><br><span class="line">&#x2F;&#x2F;移除同步消息屏障</span><br><span class="line">removeSyncBarrier(token)</span><br></pre></td></tr></table></figure>
+<p>一般而言，UI 的处理优先级都比较高，我们可以在 ViewRootImpl.java 内看到异步消息的存在。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">void scheduleTraversals()&#123;</span><br><span class="line">    ...</span><br><span class="line">    &#x2F;&#x2F;发送同步屏障消息</span><br><span class="line">    mTraversalBarrier &#x3D; mHandler.getLooper().getQueue().postSyncBarrier();</span><br><span class="line">    &#x2F;&#x2F;追踪下去可以发现，这里是发送了一个异步消息</span><br><span class="line">    mChoreographer.postCallback(</span><br><span class="line">            Choreographer.CALLBACK_TRAVERSAL, mTraversalRunnable, null);</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line">void unscheduleTraversals()&#123;</span><br><span class="line">    ...</span><br><span class="line">    &#x2F;&#x2F;移除消息屏障</span><br><span class="line">    mHandler.getLooper().getQueue().removeSyncBarrier(mTraversalBarrier);</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line">void doTraversal() &#123;</span><br><span class="line">    ...</span><br><span class="line">    &#x2F;&#x2F;移除消息屏障</span><br><span class="line">    mHandler.getLooper().getQueue().removeSyncBarrier(mTraversalBarrier);</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>发送同步屏障消息和移除同步屏障消息必须是成对出现。</p>
+<pre><code>如果添加比移除多，那么同步消息就一直得不到执行
+如果移除比添加多，移除的时候找不到同步屏障消息，就会报错导致崩溃，报错信息如下，是不是会有点眼熟。
+“The specified message queue synchronization barrier token has not been posted or has already been removed.”</code></pre>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>Handler</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>HashMap 结构相关</title>
+    <url>/2017/12/28/HashMap%20%E7%9B%B8%E5%85%B3/</url>
+    <content><![CDATA[<h3 id="HashMap"><a href="#HashMap" class="headerlink" title="HashMap"></a>HashMap</h3><h4 id="HashMap-的数据结构"><a href="#HashMap-的数据结构" class="headerlink" title="HashMap 的数据结构"></a>HashMap 的数据结构</h4><p>HashMap 的数据结构是 key-value。HashMap 存储的时候， key-value 是绑定在一起以 Entry 形式进行存储的。</p>
+<a id="more"></a>
+
+<h4 id="HashMap-的存储结构"><a href="#HashMap-的存储结构" class="headerlink" title="HashMap 的存储结构"></a>HashMap 的存储结构</h4><p>HashMap 的存储结构是一个 数组链表。理想的存储状态是数组的连续存储空间上，每个空间地址上只存有一项 Entry。</p>
+<p>Entry 存储的时候，存储的空间地址是根据 key 的 hasCode 来计算 hash 值的。根据 hash 值得到 entry 在这个数组的下标。如果这个下标上已经有 entry 了（应该称作 hashMap 的碰撞），那么这个下标上的数据将以链表的形式存储，新的 entry 将作为链表的头，最先加入的 entry 放在链表的尾。如果这个下标上没有其他的数据，则直接将 entry 放到下标处。</p>
+<p>HasMap 的存储数组大小有一个默认大小，在 map 存储的数据快要超过数组大小的时候，HasMap 就要进行一次 resize，数组的大小将会扩大一倍。resize 的代价比较大，因为他会重新计算和分配已存储的所有数据的位置，默认的是在数据量达到数组大小 size * 0.75 的时候，就会进行 resize 操作。0.75 叫做负载因子。</p>
+<p>HashMap 在创建的时候是可以自定义数组大小和负载因子的。不传的话，默认数组大小为 16，负载因子为 0.75</p>
+<p>负载因子越大，空间利用率越高，但是查找效率会降低。负载因子越小，查找效率越高，空间利用率越低。</p>
+<h4 id="HashMap-不是线程安全的"><a href="#HashMap-不是线程安全的" class="headerlink" title="HashMap 不是线程安全的"></a>HashMap 不是线程安全的</h4><p>HashMap 不是线程安全的，如果在迭代过程中，有人修改了 map，就会抛出异常 ConcurrentModificationException</p>
+<h4 id="HashMap-的正确遍历"><a href="#HashMap-的正确遍历" class="headerlink" title="HashMap 的正确遍历"></a>HashMap 的正确遍历</h4><h5 id="第一种"><a href="#第一种" class="headerlink" title="第一种"></a>第一种</h5><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">　　Map map &#x3D; new HashMap();</span><br><span class="line">　　Iterator iter &#x3D; map.entrySet().iterator();</span><br><span class="line">　　while (iter.hasNext()) &#123;</span><br><span class="line">　　    Map.Entry entry &#x3D; (Map.Entry) iter.next();</span><br><span class="line">    　　Object key &#x3D; entry.getKey();</span><br><span class="line">　    　Object val &#x3D; entry.getValue();</span><br><span class="line">　　&#125;</span><br></pre></td></tr></table></figure>
+<p>效率高，推荐使用这种方式</p>
+<h5 id="第二种"><a href="#第二种" class="headerlink" title="第二种"></a>第二种</h5><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Map map &#x3D; new HashMap();</span><br><span class="line">Iterator iter &#x3D; map.keySet().iterator();</span><br><span class="line">while (iter.hasNext()) &#123;</span><br><span class="line">    Object key &#x3D; iter.next();</span><br><span class="line">    Object val &#x3D; map.get(key);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>效率低，以后尽量少使用</p>
+]]></content>
+      <categories>
+        <category>数据结构</category>
+      </categories>
+      <tags>
+        <tag>HashMap</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>线程池</title>
+    <url>/2018/07/15/JAVA_%E7%BA%BF%E7%A8%8B%E6%B1%A0/</url>
+    <content><![CDATA[<h2 id="什么是线程池"><a href="#什么是线程池" class="headerlink" title="什么是线程池"></a>什么是线程池</h2><p>线程池是一套完整的线程管理机制。</p>
+<h2 id="为什么要用线程池"><a href="#为什么要用线程池" class="headerlink" title="为什么要用线程池"></a>为什么要用线程池</h2><p>在一些特定的情况下，需要频繁的开启线程去执行任务，而且任务的执行时间又很短。那么线程的创建和销毁就会频繁的发生，对资源的消耗会比较大。这时候就需要使用线程池，对线程进行复用，降低了线程的创建和销毁次数，从而降低系统的资源消耗</p>
+<a id="more"></a>
+
+<h2 id="怎么使用"><a href="#怎么使用" class="headerlink" title="怎么使用"></a>怎么使用</h2><p>一般使用的话，可以直接通过 Executors 类，快捷实现不同类型的线程池。</p>
+<ol>
+<li>Executors.newCachedThreadPool()：无限线程池。</li>
+<li>Executors.newFixedThreadPool(nThreads)：创建固定大小的线程池。</li>
+<li>Executors.newSingleThreadExecutor()：创建单个线程的线程池。</li>
+</ol>
+<p>threadPool.execute(new Job());</p>
+<p>线程池调用 execute 就可以提交任务，并根据情况去开始任务或者对任务做排队处理等</p>
+<pre><code>线程池的核心是 ThreadPoolExecutor 类，
+Executors 的快捷生成也是通过对 ThreadPoolExecutor 类的操作完成的
+
+ThreadPoolExecutor(int corePoolSize,
+                          int maximumPoolSize,
+                          long keepAliveTime,
+                          TimeUnit unit,
+                          BlockingQueue&lt;Runnable&gt; workQueue)
+参数后面再详细讲解</code></pre>
+<h2 id="线程池的原理"><a href="#线程池的原理" class="headerlink" title="线程池的原理"></a>线程池的原理</h2><h3 id="线程池的运作流程"><a href="#线程池的运作流程" class="headerlink" title="线程池的运作流程"></a>线程池的运作流程</h3><pre><code>把线程池比喻为一个加工厂。
+线程就是加工厂的员工，一个员工同一时间只能处理一个加工原件。
+加工厂还有一个仓库，当所有员工都在工作的时候，新到的加工原件就会运到仓库里。
+仓库是有容量限制的，最多存储 m 个加工原件。
+加工厂老板最多只会请 n 个员工，所以说加工厂的员工数量是有一个限制的。
+
+初始状态：加工厂仓库配置好了，但是一个工人都没有。</code></pre>
+<p>当第一个加工原件到来的时候，工厂没有工人，就会去招一个工人来干活。</p>
+<p>后面继续有加工原件到来的时候，就会视情况而定了。</p>
+<pre><code>[1.1] 如果有空闲的工人，就立即分配给空闲的工人去加工。
+[1.2] 如果没有空闲的工人，那就看看工厂的员工数量是否达到 n 个。
+    [1.2.1] 如果没有，则继续招人，并分配任务。
+    [1.2.2] 如果到达了，则需要看看仓库是否已满。
+        [1.2.2.1] 如果未满，则将加工原件放在仓库里，排队等待员工。
+        [1.2.2.2] 如果已满，则加工厂会拒绝接受这个加工原件。</code></pre>
+<h3 id="线程池内的数量控制"><a href="#线程池内的数量控制" class="headerlink" title="线程池内的数量控制"></a>线程池内的数量控制</h3><p>继续上面的比喻。</p>
+<pre><code>员工分为两种，核心员工和非核心员工。
+分别对应核心线程和非核心线程。
+
+区别：
+    核心线程，默认情况下不会因为超时，而被回收，除非特意设置了 allowsCoreThreadTimeOut。
+    非核心线程，在超时后，会被销毁回收。
+
+类比一下就是，核心员工进来后，正常情况下，不用担心被辞退。
+非核员工，当一段时候没活干之后，就会被辞退了。</code></pre>
+<p>那么工厂的员工数量如何控制？</p>
+<p>首先加工厂会先做好人员配置，即需要事先想好，最多招多少个核心员工以及多少个非核心员工。</p>
+<p>代码里对应的就是在新建线程池的时候，传入的2个参数决定的。</p>
+<pre><code>int corePoolSize,int maximumPoolSize
+corePoolSize 代表核心员工的数量
+maximumPoolSize 代表员工数量最多多少个</code></pre>
+<p>非核心员工的数量就可以理解为 maximumPoolSize  -  corePoolSize，如果maximumPoolSize 小于等于 corePoolSize ，那么 maximumPoolSize 就没有意义，也就代表不会有非核心员工。</p>
+<p>如果 maximumPoolSize &gt; corePoolSize，代表可以有非核心员工。那么上面的流程其实是不准确的。在 [1.2] 的时候，用作判断的 n 其实是 corePoolSize。 maximumPoolSize 会在 [1.2.2.2] 之后还会做一次判断。改动后的流程如下：</p>
+<pre><code>[1.1] 如果有空闲的工人，就立即分配给空闲的工人去加工。
+[1.2] 如果没有空闲的工人，那就看看工厂的员工数量是否达到 corePoolSize。
+    [1.2.1] 如果没有，则继续招聘核心员工，并分配任务。
+    [1.2.2] 如果到达了，则需要看看仓库是否已满。
+        [1.2.2.1] 如果未满，则将加工原件放在仓库里，排队等待核心员工。
+        [1.2.2.2] 如果已满，则判断当前员工总数是否达到 maximumPoolSize。
+            [1.2.2.2.1] 如果没有，则招聘非核心员工，分配任务。
+            [1.2.2.2.2] 如果达到，加工厂会拒绝接受这个加工原件</code></pre>
+<h3 id="参数解析"><a href="#参数解析" class="headerlink" title="参数解析"></a>参数解析</h3><pre><code>int corePoolSize,int maximumPoolSize 上面已经讲解了</code></pre>
+<p>接下来</p>
+<pre><code>long keepAliveTime, TimeUnit unit 
+keepAliveTime：时间的值
+unit：时间单位
+
+他们是一体的，代表着超时时间。
+就是非核心线程在空闲后，多久会被回收。
+类比过来就是，非核心员工在多久没活干之后，就会被工厂辞退的意思。</code></pre>
+<p>最后 </p>
+<pre><code>BlockingQueue&lt;Runnable&gt; workQueue
+workQueue 就是仓库的类比，是一个阻塞队列，分为有界队列和无界队列。
+线程超时关闭的功能就是依赖于此队列实现的。
+核心线程和非核心线程在完成任务后，都会去从队列里查找是否有新的任务，但查找方式有区别。
+非核心线程，是通过阻塞队列的 poll 方法，而核心线程是通过 take 方法。
+这样就能理解了为什么核心线程不会超时，而非核心线程会超时了。</code></pre>
+]]></content>
+      <categories>
+        <category>JAVA</category>
+      </categories>
+      <tags>
+        <tag>线程池</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>简述 HTTP 和 HTTPS 的区别</title>
+    <url>/2017/10/26/%E7%AE%80%E8%BF%B0http%E5%92%8Chttps%E7%9A%84%E5%8C%BA%E5%88%AB/</url>
+    <content><![CDATA[<h3 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h3><p>HTTP 和 HTTPS 都属于应用层协议。HTTP 是不安全的，而 HTTPS 是安全的。</p>
+<h3 id="HTTP-不安全的原因"><a href="#HTTP-不安全的原因" class="headerlink" title="HTTP 不安全的原因"></a>HTTP 不安全的原因</h3><p>为什么 HTTP 是不安全的？</p>
+<a id="more"></a>
+
+<p>通过 HTTP 协议传输的内容都是明文的，当你提交数据后，数据在到达指定服务器之前，有可能会经历一段很长的路。路上会经历很多关卡，比如路由器的所有者，网线途径路线上的不明意图者，运营商。。。等等，他们都能看到你的数据。他们中的任何人如果想要查看你发送的数据内容，都是轻而易举的。所以当你输入用户名，密码等敏感信息并提交后，这些信息都能被窃取。由此可见 HTTP 协议是不安全的。</p>
+<h3 id="HTTPS-为什么是安全的"><a href="#HTTPS-为什么是安全的" class="headerlink" title="HTTPS 为什么是安全的"></a>HTTPS 为什么是安全的</h3><p>HTTP 不安全的原因是因为它传输的内容都是明文的，那么想要安全，就需要对传输内容进行加密。</p>
+<p>HTTPS 协议传输的内容就是加密的，即使被第三方截取到了，也很难破解出加密内容。所以 HTTPS 是安全的协议。</p>
+<h3 id="HTTPS-是如何做到安全的"><a href="#HTTPS-是如何做到安全的" class="headerlink" title="HTTPS 是如何做到安全的"></a>HTTPS 是如何做到安全的</h3><h4 id="加密方式"><a href="#加密方式" class="headerlink" title="加密方式"></a>加密方式</h4><p>在这之前需要简单了解一下基础密码学。对信息的加密普遍分为 2 种：</p>
+<ul>
+<li><p>对称加密：加密和解密使用的密钥是相同的，只存在一个密钥</p>
+</li>
+<li><p>非对称加密：加密和解密使用的密钥是不同的（分为公钥和私钥，公钥加密的信息可以用私钥解密，私钥加密的信息可以用公钥解密）,公钥一般是开放出去的，大家都可以知道，私钥只能自己知道。这样用公钥加密的信息，只有自己能够解密。</p>
+</li>
+</ul>
+<h4 id="HTTPS-内容加密"><a href="#HTTPS-内容加密" class="headerlink" title="HTTPS 内容加密"></a>HTTPS 内容加密</h4><p>HTTPS 是 HTTP 协议 + SSL/TLS 协议的组合。可以理解为 HTTPS 就是使用 SSL/TLS 协议帮助 HTTP 实现加密传输。</p>
+<p>那么对传输内容的加密方式如何选择？选择对称加密还是非对称加密？</p>
+<p>HTTPS 选择的是对称加密。这牵扯到了加密算法的效率问题，对称加密的效率要显著高于非对称加密。HTTPS 为了保证信息传递的高速特性，选择了对称加密。发送方和接收方都有同一个密钥，发送方用密钥加密传输内容，接收方接受到内容后，用密钥解密得到发送方发送的内容，实现对传输内容的保护。</p>
+<h4 id="对称加密密钥的安全保护"><a href="#对称加密密钥的安全保护" class="headerlink" title="对称加密密钥的安全保护"></a>对称加密密钥的安全保护</h4><p>传输内容加密完成了，但是问题也随着而来，如何保证发送方和接受方都持有同一个密钥，并且不被别人知道这个密钥呢。这里就需要使用到非对称加密了。</p>
+<p>HTTPS 协议在传输内容之前，会先建立起一个安全连接，然后再来传送数据。</p>
+<p>什么叫建立安全连接呢？其实所谓建立安全连接的过程，就是如何安全传送对称加密密钥的过程。</p>
+<p>这里 A 代表发送方，B 代表接收方，KEY 代表对称加密的密钥，其中 B 有私钥和公钥。简单描述一下建立安全连接的过程：</p>
+<p>  1：A 向 B 发送一次 SSL 通信请求（SSL 通信请求可以看成是带有特殊标记的请求，B 通过这个标记知道 A 想要和 B 通信的意图）</p>
+<p>  2：B 收到 A 的 SSL 请求后，知道 A 想要和他通信。于是 B 把自己的公钥返回给了 A</p>
+<p>  3：A 收到 B 的公钥后，把 KEY 通过 B 的公钥加密，然后发送给 B</p>
+<p>  4：B 收到加密后的信息，用自己的私钥解密得到了 KEY，然后通知 A 我已经拿到 KYE 了</p>
+<p>  5：A 收到了 B 的消息时，安全连接就已经建立完成。从此 A 和 B 就可以使用 KEY 对传输内容进行加密了</p>
+<p>  可以看到通过 非对称加密 传送 对称加密的密钥 KEY，实现了 KEY 只有 A 和 B 知道，建立起了安全的通信连接。</p>
+<h4 id="证书的作用"><a href="#证书的作用" class="headerlink" title="证书的作用"></a>证书的作用</h4><p>SSL 这一套加密解密的方式看起来非常完美，但是总有人想要去破解它，于是有人发现了一种方式可以完美的绕开 SSL，这种方式可以描述为中间者的欺骗。</p>
+<p>再来回顾一遍 HTTPS 安全连接的建立过程，不过这次加上中间者 C 并且 C 有自己的公钥和私钥。<br>看看 C 是如何完美的破解 SSL 的加密解密流程。</p>
+<p>  1：A 向 B 发送一次 SSL 通信请求，但是请求被 C 给截取了</p>
+<p>  2：C 原封不动的把 A 的请求发送给了 B</p>
+<p>  3：B 收到 C 的 SSL 请求后， B 把自己的公钥返回给了 C</p>
+<p>  4：C 收到 B 的公钥后，这时候 C 把 B 的公钥保存起来，然后把自己的公钥传给了 A</p>
+<p>  5：A 收到 C 的公钥后，把 KEY 通过 C 的公钥加密，然后发送给 C</p>
+<p>  6：C 收到 A 的加密信息，用自己的私钥解密后得到了 KEY，然后通过 B 的公钥又来加密 KEY，并发送给 B</p>
+<p>  7：B 收到加密后的信息，用自己的私钥解密得到了 KEY，然后通知 C 我已经拿到 KYE 了。</p>
+<p>  8：C 收到了 B 的消息后的同时也把消息传递给 A 。此时连接建立完成，但是这个连接并不安全，因为 A B C 都拿到了 KEY，C 完全可以通过 KEY 去解密 A B 之间的通信内容。</p>
+<p>那怎么应对这种中间者的欺骗呢？</p>
+<p>这时候就衍生出了证书这一产物。证书是证明什么的呢？证书又是如何发挥作用的呢？</p>
+<p>  证书证明的是你的公钥的合法性。</p>
+<p>  证书是由权威的机构颁发的，用以证明这个公钥是你自己的并且合法的。上述过程中，C 全程充当 A 和 B 之间通信的一个中间传递者，但是有了证书之后 C 想要冒充 B，但是却没有 B 的证书，就没办法向 A 证明自己是 B 了，A 就会收到警告，那么 A 就知道有人在冒充 B 和他通信了。</p>
+<p>这样中间者的欺骗就被识破了。</p>
+]]></content>
+      <categories>
+        <category>网络</category>
+      </categories>
+      <tags>
+        <tag>http</tag>
+        <tag>https</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>聚合渠道包制作流程</title>
+    <url>/2017/10/15/%E8%81%9A%E5%90%88%E6%B8%A0%E9%81%93%E5%8C%85%E5%88%B6%E4%BD%9C%E6%B5%81%E7%A8%8B/</url>
+    <content><![CDATA[<h2 id="一：制作纯净包目录"><a href="#一：制作纯净包目录" class="headerlink" title="一：制作纯净包目录"></a>一：制作纯净包目录</h2><h4 id="提供给游戏的是聚合了怪猫-SDK-的聚合-SDK。所以拿到-CP-放接了聚合-SDK-的游戏包后，第一步就是制作一个纯净包目录（不包含渠道-SDK-相关文件）"><a href="#提供给游戏的是聚合了怪猫-SDK-的聚合-SDK。所以拿到-CP-放接了聚合-SDK-的游戏包后，第一步就是制作一个纯净包目录（不包含渠道-SDK-相关文件）" class="headerlink" title="提供给游戏的是聚合了怪猫 SDK 的聚合 SDK。所以拿到 CP 放接了聚合 SDK 的游戏包后，第一步就是制作一个纯净包目录（不包含渠道 SDK 相关文件）"></a>提供给游戏的是聚合了怪猫 SDK 的聚合 SDK。所以拿到 CP 放接了聚合 SDK 的游戏包后，第一步就是制作一个纯净包目录（不包含渠道 SDK 相关文件）</h4><ul>
+<li><p>第一步，首先通过 apktool 工具反编译游戏包（game.apk）</p>
+<a id="more"></a>
+
+ <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">apktool d game.apk</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>第二步，清除怪猫 SDK 相关文件。</p>
+<pre><code> . 修改 AndroidManifest.xml 文件
+ . 删除 assets 目录下相关文件
+ . 删除 libs 目录下相关文件
+ . 删除 res 目录下相关文件
+ . 删除 unknown 目录和 smali 目录下的怪猫 SDK 的相关代码（这个需要注意，一定要确定是怪猫的才能删除，如果不确定就不去删除，相对来说，代码污染也比游戏崩掉好些）</code></pre>
+<p> NOTE：千万不要误删游戏相关文件，尤其是  res 目录比较容易误删。一般怪猫 SDK 需要删除的东西是固定，除非怪猫 SDK 更新了版本。</p>
+</li>
+</ul>
+<h2 id="二：生成指定渠道-apk"><a href="#二：生成指定渠道-apk" class="headerlink" title="二：生成指定渠道 apk"></a>二：生成指定渠道 apk</h2><h4 id="导入指定渠道-SDK-的文件，相关文件可以通过-apktool-反编译渠道-SDK-的-demo-apk-获取"><a href="#导入指定渠道-SDK-的文件，相关文件可以通过-apktool-反编译渠道-SDK-的-demo-apk-获取" class="headerlink" title="导入指定渠道 SDK 的文件，相关文件可以通过 apktool 反编译渠道 SDK 的 demo apk 获取"></a>导入指定渠道 SDK 的文件，相关文件可以通过 apktool 反编译渠道 SDK 的 demo apk 获取</h4><ul>
+<li><p>第一步，反编译渠道 SDK demo apk</p>
+  <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">apktool d demo.apk</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>第二步，复制渠道 SDK 的相关文件到纯净包里（这里最好复制一份纯净包进行操作，以便后面的渠道包出包）。</p>
+<pre><code>. 根据 Demo 里面的 AndroidManifest.xml 修改纯净包里的 AndroidManifest.xml
+. 复制 Demo assets 目录下的相关文件到纯净包的 assets 目录
+. 复制 Demo libs 目录下的相关文件到纯净包的 libs 目录
+. 复制 Demo res 目录下的相关文件到纯净包的 res 目录
+. 复制 Demo unknown 目录和 smali 目录到纯净包的根目录下（相同路径下的文件会覆盖）</code></pre>
+</li>
+</ul>
+<h4 id="生成渠道-apk"><a href="#生成渠道-apk" class="headerlink" title="生成渠道 apk"></a>生成渠道 apk</h4><pre><code>  资源文件准备好了之后，就可以通过 apktool 编译 apk 了。</code></pre>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">apktool b demo</span><br></pre></td></tr></table></figure>
+
+<pre><code>  在 demo/dist 目录下找到生成的 apk，然后对 apk 签名即可</code></pre>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">jarsigner -keystore *** -storepass *** -signedjar dist.apk -digestalg SHA1 -sigalg MD5withRSA  demo.apk ***</span><br></pre></td></tr></table></figure>
+
+<pre><code>  NOTE:
+  . 第一个 *** 代表你的 keystore 文件
+  . 第二个 *** 代表你的 keystore 密码
+  . 第三个 *** 代表你的 alias 名字</code></pre>
+]]></content>
+      <categories>
+        <category>打包</category>
+      </categories>
+      <tags>
+        <tag>聚合</tag>
+        <tag>sdk</tag>
+      </tags>
+  </entry>
+</search>
