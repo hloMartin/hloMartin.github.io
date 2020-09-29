@@ -41,27 +41,6 @@
       </tags>
   </entry>
   <entry>
-    <title>Android 内存泄漏相关</title>
-    <url>/2018/01/08/Android%20%E5%86%85%E5%AD%98%E6%B3%84%E6%BC%8F%E7%9A%84%E5%8E%9F%E5%9B%A0%E5%92%8C%E8%A7%A3%E5%86%B3%E6%80%9D%E8%B7%AF/</url>
-    <content><![CDATA[<h2 id="为什么会产生内存泄漏？"><a href="#为什么会产生内存泄漏？" class="headerlink" title="为什么会产生内存泄漏？"></a>为什么会产生内存泄漏？</h2><p>当一个对象 A 不再需要使用，本应该被 GC 回收的时候，另外一个正在使用的对象 B 持有了 A 的引用，导致了 A 不能及时的被回收掉，A 依旧存在内存里，这就导致了内存的泄漏</p>
-<h2 id="内存泄漏有什么影响？"><a href="#内存泄漏有什么影响？" class="headerlink" title="内存泄漏有什么影响？"></a>内存泄漏有什么影响？</h2><p>  对于 Android 应用来说，内存泄漏是造成 OOM 的主要原因之一。由于 Android 系统为每个 APP 分配的内存是有限的，APP 内如果发生的内存泄漏较多，导致 APP 可用内存越来越少，很容易发生内存溢出从而导致 APP 崩溃。</p>
-<a id="more"></a>
-
-<h2 id="如何检测和分析内存泄漏"><a href="#如何检测和分析内存泄漏" class="headerlink" title="如何检测和分析内存泄漏"></a>如何检测和分析内存泄漏</h2><p>内存泄漏发生在堆内存上，对于我们来说并不可见，所以需要借助一些工具来检测。常用的工具有 MAT，LeakCanary。<br>    1. MAT （没用过）<br>    2. LeakCanay（没用过）</p>
-<h2 id="常见的内存泄漏以及解决方法"><a href="#常见的内存泄漏以及解决方法" class="headerlink" title="常见的内存泄漏以及解决方法"></a>常见的内存泄漏以及解决方法</h2><h3 id="单例模式造成的内存泄漏"><a href="#单例模式造成的内存泄漏" class="headerlink" title="单例模式造成的内存泄漏"></a>单例模式造成的内存泄漏</h3><p>由于单例的静态特性使得其生命周期和应用的生命周期一样长，如果一个对象 A 已经不再需要被使用，但是被单例所持有，就会导致 A 不能被回收，从而导致了内存泄漏<br>在 Android 中最常见的就是单例模式传入了 Activity 的 Context。如果 Activity 不再需要，Activity 也不能被正常回收，<br>解决方法：不管传入什么 Context，最终使用的是  Application 的 Context。这样就不会发生内存泄漏了</p>
-<h3 id="创建了一个非静态内部类的静态实例造成的内存泄漏"><a href="#创建了一个非静态内部类的静态实例造成的内存泄漏" class="headerlink" title="创建了一个非静态内部类的静态实例造成的内存泄漏"></a>创建了一个非静态内部类的静态实例造成的内存泄漏</h3><p>在 Activity 内有一个非静态的内部类 A，并且有一个 A 的静态实例。由于 A 是静态变量，生命周期和应用的生命周期一样长。<br>而  A 是 Activity 的非静态内部类，A 会持有 Activity 的引用。这样就导致了，Activity 在可以被回收的时候，由于被 A 持有引用，而不能正常被回收，从而导致了内存泄漏。<br>解决方法：额。就是尽量避免这种情况。。。如果有需求可以将 A 设置成静态内部类，或者将 A 抽离出来，形成单例。</p>
-<h3 id="Handler-造成的内存泄漏"><a href="#Handler-造成的内存泄漏" class="headerlink" title="Handler 造成的内存泄漏"></a>Handler 造成的内存泄漏</h3><p>Android UI 线程不能做耗时操作（联网请求等），如果需要执行的话，会用到 Handler （当然不是唯一的方法）。<br>Handler 消息机制，主线程创建一个 Handler 实例后，Handler 会绑定主线程的 Looper 和 MessageQueue。<br>Handler 发送 Message 到 MessageQueue，Message 会携带 Handler 的引用。<br>当 Looper 从 MessageQueue 取出 Message 的时候，会通过 Message 携带的 Handler 引用，调用 Handler 的处理方法。<br>所以只要 MessageQueue 里还有未处理的 Message，那么 Handler 就会一直被 Message 持有引用，而 Handler 是 Activity 的匿名内部类，Handler 持有 Activity 的引用。<br>所以只要消息没有被处理完，Activity 就不能被回收，这样就很大几率造成了内存泄漏了。<br>解决方法：将 Handler 类改成静态内部类，就可以避免内存泄漏了（还有弱引用的方式，GC 回收的时候会忽略弱引用，强制回收）</p>
-<h3 id="线程造成的泄漏"><a href="#线程造成的泄漏" class="headerlink" title="线程造成的泄漏"></a>线程造成的泄漏</h3><p>原理和 Handler 造成的内存泄漏一致，AsyncTask 和 Runnable 的使用一般都是匿名内部类，如果线程中的任务未完成，Activity 销毁了。Activity 也不能被 GC 回收。<br>解决方法：将 AsyncTask 和 Runnable 设置成静态内部类。</p>
-<h3 id="资源未关闭造成的内存泄漏"><a href="#资源未关闭造成的内存泄漏" class="headerlink" title="资源未关闭造成的内存泄漏"></a>资源未关闭造成的内存泄漏</h3><p>对于 BroadcastReceiver，ContentObserver，File，Cursor，Streamd 等资源应该在 Activity 销毁的时候及时释放，关闭或注销。</p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>内存</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Android ANR 小结</title>
     <url>/2017/09/11/Android%20ANR/</url>
     <content><![CDATA[<h3 id="ANR-介绍"><a href="#ANR-介绍" class="headerlink" title="ANR 介绍"></a>ANR 介绍</h3><p>ANR错误，是 Handler 发送延时消息，当处理及时，取消延时消息。处理不及时，延时消息（就是 ANR）就发送出去了，就会有 ANR 错误。</p>
@@ -82,6 +61,27 @@
       </categories>
       <tags>
         <tag>ANR</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Android 内存泄漏相关</title>
+    <url>/2018/01/08/Android%20%E5%86%85%E5%AD%98%E6%B3%84%E6%BC%8F%E7%9A%84%E5%8E%9F%E5%9B%A0%E5%92%8C%E8%A7%A3%E5%86%B3%E6%80%9D%E8%B7%AF/</url>
+    <content><![CDATA[<h2 id="为什么会产生内存泄漏？"><a href="#为什么会产生内存泄漏？" class="headerlink" title="为什么会产生内存泄漏？"></a>为什么会产生内存泄漏？</h2><p>当一个对象 A 不再需要使用，本应该被 GC 回收的时候，另外一个正在使用的对象 B 持有了 A 的引用，导致了 A 不能及时的被回收掉，A 依旧存在内存里，这就导致了内存的泄漏</p>
+<h2 id="内存泄漏有什么影响？"><a href="#内存泄漏有什么影响？" class="headerlink" title="内存泄漏有什么影响？"></a>内存泄漏有什么影响？</h2><p>  对于 Android 应用来说，内存泄漏是造成 OOM 的主要原因之一。由于 Android 系统为每个 APP 分配的内存是有限的，APP 内如果发生的内存泄漏较多，导致 APP 可用内存越来越少，很容易发生内存溢出从而导致 APP 崩溃。</p>
+<a id="more"></a>
+
+<h2 id="如何检测和分析内存泄漏"><a href="#如何检测和分析内存泄漏" class="headerlink" title="如何检测和分析内存泄漏"></a>如何检测和分析内存泄漏</h2><p>内存泄漏发生在堆内存上，对于我们来说并不可见，所以需要借助一些工具来检测。常用的工具有 MAT，LeakCanary。<br>    1. MAT （没用过）<br>    2. LeakCanay（没用过）</p>
+<h2 id="常见的内存泄漏以及解决方法"><a href="#常见的内存泄漏以及解决方法" class="headerlink" title="常见的内存泄漏以及解决方法"></a>常见的内存泄漏以及解决方法</h2><h3 id="单例模式造成的内存泄漏"><a href="#单例模式造成的内存泄漏" class="headerlink" title="单例模式造成的内存泄漏"></a>单例模式造成的内存泄漏</h3><p>由于单例的静态特性使得其生命周期和应用的生命周期一样长，如果一个对象 A 已经不再需要被使用，但是被单例所持有，就会导致 A 不能被回收，从而导致了内存泄漏<br>在 Android 中最常见的就是单例模式传入了 Activity 的 Context。如果 Activity 不再需要，Activity 也不能被正常回收，<br>解决方法：不管传入什么 Context，最终使用的是  Application 的 Context。这样就不会发生内存泄漏了</p>
+<h3 id="创建了一个非静态内部类的静态实例造成的内存泄漏"><a href="#创建了一个非静态内部类的静态实例造成的内存泄漏" class="headerlink" title="创建了一个非静态内部类的静态实例造成的内存泄漏"></a>创建了一个非静态内部类的静态实例造成的内存泄漏</h3><p>在 Activity 内有一个非静态的内部类 A，并且有一个 A 的静态实例。由于 A 是静态变量，生命周期和应用的生命周期一样长。<br>而  A 是 Activity 的非静态内部类，A 会持有 Activity 的引用。这样就导致了，Activity 在可以被回收的时候，由于被 A 持有引用，而不能正常被回收，从而导致了内存泄漏。<br>解决方法：额。就是尽量避免这种情况。。。如果有需求可以将 A 设置成静态内部类，或者将 A 抽离出来，形成单例。</p>
+<h3 id="Handler-造成的内存泄漏"><a href="#Handler-造成的内存泄漏" class="headerlink" title="Handler 造成的内存泄漏"></a>Handler 造成的内存泄漏</h3><p>Android UI 线程不能做耗时操作（联网请求等），如果需要执行的话，会用到 Handler （当然不是唯一的方法）。<br>Handler 消息机制，主线程创建一个 Handler 实例后，Handler 会绑定主线程的 Looper 和 MessageQueue。<br>Handler 发送 Message 到 MessageQueue，Message 会携带 Handler 的引用。<br>当 Looper 从 MessageQueue 取出 Message 的时候，会通过 Message 携带的 Handler 引用，调用 Handler 的处理方法。<br>所以只要 MessageQueue 里还有未处理的 Message，那么 Handler 就会一直被 Message 持有引用，而 Handler 是 Activity 的匿名内部类，Handler 持有 Activity 的引用。<br>所以只要消息没有被处理完，Activity 就不能被回收，这样就很大几率造成了内存泄漏了。<br>解决方法：将 Handler 类改成静态内部类，就可以避免内存泄漏了（还有弱引用的方式，GC 回收的时候会忽略弱引用，强制回收）</p>
+<h3 id="线程造成的泄漏"><a href="#线程造成的泄漏" class="headerlink" title="线程造成的泄漏"></a>线程造成的泄漏</h3><p>原理和 Handler 造成的内存泄漏一致，AsyncTask 和 Runnable 的使用一般都是匿名内部类，如果线程中的任务未完成，Activity 销毁了。Activity 也不能被 GC 回收。<br>解决方法：将 AsyncTask 和 Runnable 设置成静态内部类。</p>
+<h3 id="资源未关闭造成的内存泄漏"><a href="#资源未关闭造成的内存泄漏" class="headerlink" title="资源未关闭造成的内存泄漏"></a>资源未关闭造成的内存泄漏</h3><p>对于 BroadcastReceiver，ContentObserver，File，Cursor，Streamd 等资源应该在 Activity 销毁的时候及时释放，关闭或注销。</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>内存</tag>
       </tags>
   </entry>
   <entry>
@@ -208,7 +208,7 @@ Handler 在将消息入队列之前，会判断如果 mAsynchronous 为 true，�
 <pre><code>如果 workQueue 内有任务，那么线程就会拿到新的任务并执行，这样线程就实现了一次复用了。
 如果 workQueue 内没有任务了，那么线程去取任务的操作就会阻塞住，等待新的任务加入。
 
-NOTE：线程最初创建的时候，是会携带一个初始任务的，初始任务完成后，再通过循环从 workQueue 获取任务。</code></pre>
+NOTE：一般情况下，线程在创建的时候，会携带一个初始任务的，初始任务完成后，再通过循环从 workQueue 获取任务。</code></pre>
 <h3 id="核心线程数量，线程总数之间的关系？"><a href="#核心线程数量，线程总数之间的关系？" class="headerlink" title="核心线程数量，线程总数之间的关系？"></a>核心线程数量，线程总数之间的关系？</h3><p>corePoolSize 核心线程的数量，maximumPoolSize 是线程最大数量。</p>
 <pre><code>corePoolSize &lt; maximumPoolSize，有可能出现 &lt;非核心线程&gt;。
 corePoolSize == maximumPoolSize，不会出现 &lt;非核心线程&gt;。

@@ -29,7 +29,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="http://example.com/2018/07/15/JAVA_%E7%BA%BF%E7%A8%8B%E6%B1%A0/thread_flow.jpg">
 <meta property="article:published_time" content="2018-07-14T16:00:00.000Z">
-<meta property="article:modified_time" content="2020-09-29T06:17:22.925Z">
+<meta property="article:modified_time" content="2020-09-29T06:34:40.929Z">
 <meta property="article:author" content="Martin">
 <meta property="article:tag" content="线程池">
 <meta name="twitter:card" content="summary">
@@ -288,7 +288,7 @@
 <pre><code>如果 workQueue 内有任务，那么线程就会拿到新的任务并执行，这样线程就实现了一次复用了。
 如果 workQueue 内没有任务了，那么线程去取任务的操作就会阻塞住，等待新的任务加入。
 
-NOTE：线程最初创建的时候，是会携带一个初始任务的，初始任务完成后，再通过循环从 workQueue 获取任务。</code></pre>
+NOTE：一般情况下，线程在创建的时候，会携带一个初始任务的，初始任务完成后，再通过循环从 workQueue 获取任务。</code></pre>
 <h3 id="核心线程数量，线程总数之间的关系？"><a href="#核心线程数量，线程总数之间的关系？" class="headerlink" title="核心线程数量，线程总数之间的关系？"></a>核心线程数量，线程总数之间的关系？</h3><p>corePoolSize 核心线程的数量，maximumPoolSize 是线程最大数量。</p>
 <pre><code>corePoolSize &lt; maximumPoolSize，有可能出现 &lt;非核心线程&gt;。
 corePoolSize == maximumPoolSize，不会出现 &lt;非核心线程&gt;。
