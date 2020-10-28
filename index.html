@@ -349,8 +349,8 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="为什么会产生内存泄漏？"><a href="#为什么会产生内存泄漏？" class="headerlink" title="为什么会产生内存泄漏？"></a>为什么会产生内存泄漏？</h2><p>当一个对象 A 不再需要使用，本应该被 GC 回收的时候，另外一个正在使用的对象 B 持有了 A 的引用，导致了 A 不能及时的被回收掉，A 依旧存在内存里，这就导致了内存的泄漏</p>
-<h2 id="内存泄漏有什么影响？"><a href="#内存泄漏有什么影响？" class="headerlink" title="内存泄漏有什么影响？"></a>内存泄漏有什么影响？</h2><p>  对于 Android 应用来说，内存泄漏是造成 OOM 的主要原因之一。由于 Android 系统为每个 APP 分配的内存是有限的，APP 内如果发生的内存泄漏较多，导致 APP 可用内存越来越少，很容易发生内存溢出从而导致 APP 崩溃。</p>
+          <h2 id="内存泄漏的定义"><a href="#内存泄漏的定义" class="headerlink" title="内存泄漏的定义"></a>内存泄漏的定义</h2><p>当一个不再被需要使用的对象在 GC 时不能被回收的现象就可以称为内存泄漏。</p>
+<h2 id="内存泄漏是怎么发生的"><a href="#内存泄漏是怎么发生的" class="headerlink" title="内存泄漏是怎么发生的?"></a>内存泄漏是怎么发生的?</h2><p>对象不再被需要指的是我们业务上的结果，不能被回收是虚拟机根据 GC Root 可达性分析得到的结果。<br>那么虚拟机如何判定一个对象在 GC 触发的时候是否需要回收呢？</p>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2018/01/08/Android%20%E5%86%85%E5%AD%98%E6%B3%84%E6%BC%8F%E7%9A%84%E5%8E%9F%E5%9B%A0%E5%92%8C%E8%A7%A3%E5%86%B3%E6%80%9D%E8%B7%AF/#more" rel="contents">
