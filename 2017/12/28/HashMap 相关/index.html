@@ -28,7 +28,7 @@
 <meta property="og:description" content="HashMapHashMap 的数据结构HashMap 的数据结构是 key-value。HashMap 存储的时候， key-value 是绑定在一起以 Entry 形式进行存储的。">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2017-12-27T16:00:00.000Z">
-<meta property="article:modified_time" content="2020-09-25T03:30:50.063Z">
+<meta property="article:modified_time" content="2020-10-29T09:17:07.563Z">
 <meta property="article:author" content="Martin">
 <meta property="article:tag" content="HashMap">
 <meta name="twitter:card" content="summary">
@@ -259,16 +259,12 @@
         <h3 id="HashMap"><a href="#HashMap" class="headerlink" title="HashMap"></a>HashMap</h3><h4 id="HashMap-的数据结构"><a href="#HashMap-的数据结构" class="headerlink" title="HashMap 的数据结构"></a>HashMap 的数据结构</h4><p>HashMap 的数据结构是 key-value。HashMap 存储的时候， key-value 是绑定在一起以 Entry 形式进行存储的。</p>
 <a id="more"></a>
 
-<h4 id="HashMap-的存储结构"><a href="#HashMap-的存储结构" class="headerlink" title="HashMap 的存储结构"></a>HashMap 的存储结构</h4><p>HashMap 的存储结构是一个 数组链表。理想的存储状态是数组的连续存储空间上，每个空间地址上只存有一项 Entry。</p>
+<h4 id="HashMap-的存储结构"><a href="#HashMap-的存储结构" class="headerlink" title="HashMap 的存储结构"></a>HashMap 的存储结构</h4><p>HashMap 的存储结构是一个 数组加链表。理想的存储状态是数组的连续存储空间上，每个空间地址上只存有一项 Entry。</p>
 <p>Entry 存储的时候，存储的空间地址是根据 key 的 hasCode 来计算 hash 值的。根据 hash 值得到 entry 在这个数组的下标。如果这个下标上已经有 entry 了（应该称作 hashMap 的碰撞），那么这个下标上的数据将以链表的形式存储，新的 entry 将作为链表的头，最先加入的 entry 放在链表的尾。如果这个下标上没有其他的数据，则直接将 entry 放到下标处。</p>
 <p>HasMap 的存储数组大小有一个默认大小，在 map 存储的数据快要超过数组大小的时候，HasMap 就要进行一次 resize，数组的大小将会扩大一倍。resize 的代价比较大，因为他会重新计算和分配已存储的所有数据的位置，默认的是在数据量达到数组大小 size * 0.75 的时候，就会进行 resize 操作。0.75 叫做负载因子。</p>
 <p>HashMap 在创建的时候是可以自定义数组大小和负载因子的。不传的话，默认数组大小为 16，负载因子为 0.75</p>
 <p>负载因子越大，空间利用率越高，但是查找效率会降低。负载因子越小，查找效率越高，空间利用率越低。</p>
 <h4 id="HashMap-不是线程安全的"><a href="#HashMap-不是线程安全的" class="headerlink" title="HashMap 不是线程安全的"></a>HashMap 不是线程安全的</h4><p>HashMap 不是线程安全的，如果在迭代过程中，有人修改了 map，就会抛出异常 ConcurrentModificationException</p>
-<h4 id="HashMap-的正确遍历"><a href="#HashMap-的正确遍历" class="headerlink" title="HashMap 的正确遍历"></a>HashMap 的正确遍历</h4><h5 id="第一种"><a href="#第一种" class="headerlink" title="第一种"></a>第一种</h5><figure class="highlight armasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">　　<span class="meta">Map</span> <span class="meta">map</span> = new HashMap()<span class="comment">;</span></span><br><span class="line">　　Iterator <span class="keyword">iter</span> = <span class="meta">map</span>.entrySet().iterator()<span class="comment">;</span></span><br><span class="line">　　<span class="meta">while</span> (iter.hasNext()) &#123;</span><br><span class="line">　　    <span class="meta">Map</span>.Entry <span class="meta">entry</span> = (<span class="meta">Map</span>.Entry) iter.next()<span class="comment">;</span></span><br><span class="line">    　　Object key = <span class="meta">entry</span>.getKey()<span class="comment">;</span></span><br><span class="line">　    　Object val = <span class="meta">entry</span>.getValue()<span class="comment">;</span></span><br><span class="line">　　&#125;</span><br></pre></td></tr></table></figure>
-<p>效率高，推荐使用这种方式</p>
-<h5 id="第二种"><a href="#第二种" class="headerlink" title="第二种"></a>第二种</h5><figure class="highlight processing"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Map <span class="built_in">map</span> = <span class="keyword">new</span> <span class="keyword">HashMap</span>();</span><br><span class="line">Iterator iter = <span class="built_in">map</span>.keySet().iterator();</span><br><span class="line"><span class="keyword">while</span> (iter.hasNext()) &#123;</span><br><span class="line">    <span class="keyword">Object</span> <span class="built_in">key</span> = iter.next();</span><br><span class="line">    <span class="keyword">Object</span> val = <span class="built_in">map</span>.<span class="built_in">get</span>(<span class="built_in">key</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>效率低，以后尽量少使用</p>
 
     </div>
 
@@ -353,7 +349,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#HashMap"><span class="nav-number">1.</span> <span class="nav-text">HashMap</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#HashMap-%E7%9A%84%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84"><span class="nav-number">1.1.</span> <span class="nav-text">HashMap 的数据结构</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#HashMap-%E7%9A%84%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84"><span class="nav-number">1.2.</span> <span class="nav-text">HashMap 的存储结构</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#HashMap-%E4%B8%8D%E6%98%AF%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8%E7%9A%84"><span class="nav-number">1.3.</span> <span class="nav-text">HashMap 不是线程安全的</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#HashMap-%E7%9A%84%E6%AD%A3%E7%A1%AE%E9%81%8D%E5%8E%86"><span class="nav-number">1.4.</span> <span class="nav-text">HashMap 的正确遍历</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E7%AC%AC%E4%B8%80%E7%A7%8D"><span class="nav-number">1.4.1.</span> <span class="nav-text">第一种</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E7%AC%AC%E4%BA%8C%E7%A7%8D"><span class="nav-number">1.4.2.</span> <span class="nav-text">第二种</span></a></li></ol></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#HashMap"><span class="nav-number">1.</span> <span class="nav-text">HashMap</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#HashMap-%E7%9A%84%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84"><span class="nav-number">1.1.</span> <span class="nav-text">HashMap 的数据结构</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#HashMap-%E7%9A%84%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84"><span class="nav-number">1.2.</span> <span class="nav-text">HashMap 的存储结构</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#HashMap-%E4%B8%8D%E6%98%AF%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8%E7%9A%84"><span class="nav-number">1.3.</span> <span class="nav-text">HashMap 不是线程安全的</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 

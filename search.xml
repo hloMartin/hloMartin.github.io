@@ -1,6 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>Android ANR 小结</title>
+    <url>/2017/09/11/Android%20ANR/</url>
+    <content><![CDATA[<h3 id="ANR-介绍"><a href="#ANR-介绍" class="headerlink" title="ANR 介绍"></a>ANR 介绍</h3><p>ANR错误，是 Handler 发送延时消息，当处理及时，取消延时消息。处理不及时，延时消息（就是 ANR）就发送出去了，就会有 ANR 错误。</p>
+<a id="more"></a>
+
+<p>下面分别介绍一下会产生 ANR 错误的组件及相关介绍</p>
+<h3 id="BroadcastReceiver"><a href="#BroadcastReceiver" class="headerlink" title="BroadcastReceiver"></a>BroadcastReceiver</h3><p>ANR 超时时间：<br>    前台广播：10s<br>    后台广播：60s<br>    广播如何处理 ANR 错误：<br>        再次判断是否超时，记录日志，记录 ANR 次数等，然后继续调用 processNextBroadcast，处理下一条广播</p>
+<p>NOTE：广播的注册分为动态注册和静态注册，有序和无序。广播的执行分为串行执行和并发执行。<br>                并发执行是不会出现 ANR 的，因为它不要求有执行结果反馈。<br>                串行执行是可能出现 ANR 的，因为它要求有执行结果反馈，指定时间不反馈就会出现 ANR。</p>
+<h3 id="Service"><a href="#Service" class="headerlink" title="Service"></a>Service</h3><p>ANR 超时时间：<br>        SERVICE_TIMEOUT：20S<br>        SERVICE_BACKGROUND_TIMEOUT：200s<br>服务如何处理 ANR 错误:<br>        记录日志，清理 ANR 活动。</p>
+<h3 id="ContentProvider"><a href="#ContentProvider" class="headerlink" title="ContentProvider"></a>ContentProvider</h3><p>ANR 超时时间：<br>        CONTENT_PROVIDER_PUBLISH_TIMEOUT：10S<br>        CONTENT_PROVIDER_RETAIN_TIME：20S<br>ContentProvider 可以控制是否启动 ANR。</p>
+<h3 id="Application"><a href="#Application" class="headerlink" title="Application"></a>Application</h3><p>Application的启动是执行在主线程的，attachBaseContext和onCreate等回调也是在主线程的，这里如果出现ANR，会影响到当前组件的运行。</p>
+<h3 id="Activity"><a href="#Activity" class="headerlink" title="Activity"></a>Activity</h3><p>超时时间：<br>        KEY_DISPATCHING_TIMEOUT：5s<br>        INSTRUMENTATION_KEY_DISPATCHING_TIMEOUT ：60s<br>Activity 如何处理 ANR 错误：<br>        记录 ANR 日志，并会弹出 ANR 提示框。</p>
+<p>NOTE: Activity 是唯一一个在 ANR 错误时，会弹出提示框的，也是唯一一个会影响 APP 运行的。</p>
+<h3 id="部分补充"><a href="#部分补充" class="headerlink" title="部分补充"></a>部分补充</h3><p>ANR 错误是如何记录的？<br>        log日志记录在data/anr/traces.txt文件中，这个文件每次只记录最近的一次ANR，有可能记录失败。文件内容包括dump栈，CPU负载，IO Wait等</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>ANR</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Android View 的事件分发机制</title>
     <url>/2017/08/03/Android%20View%20%E7%9A%84%E4%BA%8B%E4%BB%B6%E5%88%86%E5%8F%91%E6%9C%BA%E5%88%B6/</url>
     <content><![CDATA[<h2 id="View-事件分发"><a href="#View-事件分发" class="headerlink" title="View 事件分发"></a>View 事件分发</h2><p>点击屏幕时，在手指按下和抬起间，会产生很多事件，down，move … move，up，这些事件是一个事件序列。</p>
@@ -38,65 +61,6 @@
       </categories>
       <tags>
         <tag>触摸事件分发</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Android ANR 小结</title>
-    <url>/2017/09/11/Android%20ANR/</url>
-    <content><![CDATA[<h3 id="ANR-介绍"><a href="#ANR-介绍" class="headerlink" title="ANR 介绍"></a>ANR 介绍</h3><p>ANR错误，是 Handler 发送延时消息，当处理及时，取消延时消息。处理不及时，延时消息（就是 ANR）就发送出去了，就会有 ANR 错误。</p>
-<a id="more"></a>
-
-<p>下面分别介绍一下会产生 ANR 错误的组件及相关介绍</p>
-<h3 id="BroadcastReceiver"><a href="#BroadcastReceiver" class="headerlink" title="BroadcastReceiver"></a>BroadcastReceiver</h3><p>ANR 超时时间：<br>    前台广播：10s<br>    后台广播：60s<br>    广播如何处理 ANR 错误：<br>        再次判断是否超时，记录日志，记录 ANR 次数等，然后继续调用 processNextBroadcast，处理下一条广播</p>
-<p>NOTE：广播的注册分为动态注册和静态注册，有序和无序。广播的执行分为串行执行和并发执行。<br>                并发执行是不会出现 ANR 的，因为它不要求有执行结果反馈。<br>                串行执行是可能出现 ANR 的，因为它要求有执行结果反馈，指定时间不反馈就会出现 ANR。</p>
-<h3 id="Service"><a href="#Service" class="headerlink" title="Service"></a>Service</h3><p>ANR 超时时间：<br>        SERVICE_TIMEOUT：20S<br>        SERVICE_BACKGROUND_TIMEOUT：200s<br>服务如何处理 ANR 错误:<br>        记录日志，清理 ANR 活动。</p>
-<h3 id="ContentProvider"><a href="#ContentProvider" class="headerlink" title="ContentProvider"></a>ContentProvider</h3><p>ANR 超时时间：<br>        CONTENT_PROVIDER_PUBLISH_TIMEOUT：10S<br>        CONTENT_PROVIDER_RETAIN_TIME：20S<br>ContentProvider 可以控制是否启动 ANR。</p>
-<h3 id="Application"><a href="#Application" class="headerlink" title="Application"></a>Application</h3><p>Application的启动是执行在主线程的，attachBaseContext和onCreate等回调也是在主线程的，这里如果出现ANR，会影响到当前组件的运行。</p>
-<h3 id="Activity"><a href="#Activity" class="headerlink" title="Activity"></a>Activity</h3><p>超时时间：<br>        KEY_DISPATCHING_TIMEOUT：5s<br>        INSTRUMENTATION_KEY_DISPATCHING_TIMEOUT ：60s<br>Activity 如何处理 ANR 错误：<br>        记录 ANR 日志，并会弹出 ANR 提示框。</p>
-<p>NOTE: Activity 是唯一一个在 ANR 错误时，会弹出提示框的，也是唯一一个会影响 APP 运行的。</p>
-<h3 id="部分补充"><a href="#部分补充" class="headerlink" title="部分补充"></a>部分补充</h3><p>ANR 错误是如何记录的？<br>        log日志记录在data/anr/traces.txt文件中，这个文件每次只记录最近的一次ANR，有可能记录失败。文件内容包括dump栈，CPU负载，IO Wait等</p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>ANR</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Android 内存泄漏相关</title>
-    <url>/2018/01/08/Android%20%E5%86%85%E5%AD%98%E6%B3%84%E6%BC%8F%E7%9A%84%E5%8E%9F%E5%9B%A0%E5%92%8C%E8%A7%A3%E5%86%B3%E6%80%9D%E8%B7%AF/</url>
-    <content><![CDATA[<h2 id="内存泄漏的定义"><a href="#内存泄漏的定义" class="headerlink" title="内存泄漏的定义"></a>内存泄漏的定义</h2><p>当一个不再被需要使用的对象在 GC 时不能被回收的现象就可以称为内存泄漏。</p>
-<h2 id="内存泄漏是怎么发生的"><a href="#内存泄漏是怎么发生的" class="headerlink" title="内存泄漏是怎么发生的?"></a>内存泄漏是怎么发生的?</h2><p>对象不再被需要指的是我们业务上的结果，不能被回收是虚拟机根据 GC Root 可达性分析得到的结果。<br>那么虚拟机如何判定一个对象在 GC 触发的时候是否需要回收呢？</p>
-<a id="more"></a>
-<p>首先需要了解对象的几种引用：强引用，软引用，弱引用，虚引用。</p>
-<ul>
-<li>强引用：默认创建的对象都是强引用</li>
-<li>软引用：通过 SoftReference 创建的对象，通过 get 方法可以获取到对象，但是不保证对象还存活。内存充足，GC 触发不会被回收，内存紧张，GC 触发会被回收。</li>
-<li>弱引用：通过 WeekReference 创建的对象，通过 get 方法可以获取到对象，但是不保证对象还存活。当 GC 触发的时候，就会被回收。</li>
-<li>虚引用：通过 PhantomReference 创建的对象，通过 get 方法是获取不到对象的。不会影响对象是否被回收，在对象要被回收的时候，会把虚引用加入关联的队列里。</li>
-</ul>
-<p>GC Roots 是什么？<br>GC Roots 是一组重要对象的集合（虚拟机栈内的变量，静态变量，常量，本地方法栈中的变量,…）。<br>我们通常说的 GC Root 可达，指的就是对象被 GC Roots 对象集直接或者间接持有引用。<br>引用可能不止一个，只要有强引用，对象就不会被回收。如果是其他引用，就依据上面所说的不同类型引用的不同表现来判断是否需要回收了。</p>
-<h2 id="内存泄漏的"><a href="#内存泄漏的" class="headerlink" title="内存泄漏的"></a>内存泄漏的</h2><h2 id="内存泄漏有什么影响？"><a href="#内存泄漏有什么影响？" class="headerlink" title="内存泄漏有什么影响？"></a>内存泄漏有什么影响？</h2><p>  对于 Android 应用来说，内存泄漏是造成 OOM 的主要原因之一。由于 Android 系统为每个 APP 分配的内存是有限的，APP 内如果发生的内存泄漏较多，导致 APP 可用内存越来越少，在申请新的对象空间时就很容易发生内存溢出从而导致 APP 崩溃。</p>
-<!--more-->
-
-<h2 id="如何检测和分析内存泄漏"><a href="#如何检测和分析内存泄漏" class="headerlink" title="如何检测和分析内存泄漏"></a>如何检测和分析内存泄漏</h2><p>内存泄漏发生在堆内存上，对于我们来说并不可见，所以需要借助一些工具来检测。常用的工具有 MAT，LeakCanary。</p>
-<h2 id="常见的内存泄漏以及解决方法"><a href="#常见的内存泄漏以及解决方法" class="headerlink" title="常见的内存泄漏以及解决方法"></a>常见的内存泄漏以及解决方法</h2><h3 id="单例模式造成的内存泄漏"><a href="#单例模式造成的内存泄漏" class="headerlink" title="单例模式造成的内存泄漏"></a>单例模式造成的内存泄漏</h3><p>由于单例的静态特性（GC Root），如果一个对象 A 已经不再需要被使用，但是被单例所持有，就会导致 A 不能被回收，从而导致了内存泄漏。<br>在 Android 中最常见的就是单例模式传入了 Activity 的 Context。如果 Activity 不再需要，Activity 也不能被正常回收。</p>
-<p>解决方法：不管传入什么 Context，最终使用的是  Application 的 Context。这样就不会发生内存泄漏了</p>
-<h3 id="创建了一个非静态内部类的静态实例造成的内存泄漏"><a href="#创建了一个非静态内部类的静态实例造成的内存泄漏" class="headerlink" title="创建了一个非静态内部类的静态实例造成的内存泄漏"></a>创建了一个非静态内部类的静态实例造成的内存泄漏</h3><p>在 Activity 内有一个非静态的内部类 A，并且有一个 A 的静态实例。由于 A 是静态变量（GC Root对象）。而  A 是 Activity 的非静态内部类，A 会持有 Activity 的引用。这样就导致了，Activity 在可以被回收的时候，由于被 A 持有引用，而不能正常被回收，从而导致了内存泄漏。</p>
-<p>解决方法：额。就是尽量避免这种情况。。。如果有需求可以将 A 设置成静态内部类，或者将 A 抽离出来，形成单例。</p>
-<h3 id="Handler-造成的内存泄漏"><a href="#Handler-造成的内存泄漏" class="headerlink" title="Handler 造成的内存泄漏"></a>Handler 造成的内存泄漏</h3><p>Android UI 线程不能做耗时操作（联网请求等），如果需要执行的话，经常用到 Handler。耗时操作未结束，handler 就会一直被 message 持有引用，而 Handler 是 Activity 的匿名内部类，Handler 持有 Activity 的引用。所以只要消息没有被处理完，Activity 就不能被回收。</p>
-<p>这种内存泄漏其实还好，因为耗时操作总会结束，内存最终也会被释放。不过我们还是应该养成好的习惯，不以恶小而为之。我们可以自定义一个 Handler 的静态内部类，并通过弱引用来引用 Activity，就可以解决这个问题了。</p>
-<p>NOTE：最开始的时候，我疑惑过弱引用的使用，我当时想的是如果在耗时操作中，并没有退出 Activity ，而此时 GC 被触发了，那么对象不就没了吗？那不就有问题了？。。。额~ 后来发现是我忽略了 Activity 的多个引用，此时 Activity 对象不仅被 handler 弱引用持有，还有其他的强引用持有，是不会被回收的。除非用户主动退出 Activity，Activity 的强引用都没有了，只剩下 handler 的弱引用了，这时候弱引用就起作用了。所以是我多虑了。</p>
-<h3 id="线程造成的泄漏"><a href="#线程造成的泄漏" class="headerlink" title="线程造成的泄漏"></a>线程造成的泄漏</h3><p>原理和 Handler 造成的内存泄漏一致，AsyncTask 和 Runnable 的使用一般都是匿名内部类，如果线程中的任务未完成，Activity 销毁了。Activity 也不能被 GC 回收。</p>
-<p>解决方法：同上将 AsyncTask 和 Runnable 设置成静态内部类，并将 Activity 设置为弱引用。</p>
-<h3 id="资源未关闭造成的内存泄漏"><a href="#资源未关闭造成的内存泄漏" class="headerlink" title="资源未关闭造成的内存泄漏"></a>资源未关闭造成的内存泄漏</h3><p>对于 BroadcastReceiver，ContentObserver，File，Cursor，Streamd 等资源应该在 Activity 销毁的时候及时释放，关闭或注销。</p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>内存</tag>
       </tags>
   </entry>
   <entry>
@@ -167,21 +131,53 @@ Handler 在将消息入队列之前，会判断如果 mAsynchronous 为 true，�
       </tags>
   </entry>
   <entry>
+    <title>Android 内存泄漏相关</title>
+    <url>/2018/01/08/Android%20%E5%86%85%E5%AD%98%E6%B3%84%E6%BC%8F%E7%9A%84%E5%8E%9F%E5%9B%A0%E5%92%8C%E8%A7%A3%E5%86%B3%E6%80%9D%E8%B7%AF/</url>
+    <content><![CDATA[<h2 id="内存泄漏的定义"><a href="#内存泄漏的定义" class="headerlink" title="内存泄漏的定义"></a>内存泄漏的定义</h2><p>当一个不再被需要使用的对象在 GC 时不能被回收的现象就可以称为内存泄漏。</p>
+<h2 id="内存泄漏是怎么发生的"><a href="#内存泄漏是怎么发生的" class="headerlink" title="内存泄漏是怎么发生的?"></a>内存泄漏是怎么发生的?</h2><p>对象不再被需要指的是我们业务上的结果，不能被回收是虚拟机根据 GC Root 可达性分析得到的结果。<br>那么虚拟机如何判定一个对象在 GC 触发的时候是否需要回收呢？</p>
+<a id="more"></a>
+<p>首先需要了解对象的几种引用：强引用，软引用，弱引用，虚引用。</p>
+<ul>
+<li>强引用：默认创建的对象都是强引用</li>
+<li>软引用：通过 SoftReference 创建的对象，通过 get 方法可以获取到对象，但是不保证对象还存活。内存充足，GC 触发不会被回收，内存紧张，GC 触发会被回收。</li>
+<li>弱引用：通过 WeekReference 创建的对象，通过 get 方法可以获取到对象，但是不保证对象还存活。当 GC 触发的时候，就会被回收。</li>
+<li>虚引用：通过 PhantomReference 创建的对象，通过 get 方法是获取不到对象的。不会影响对象是否被回收，在对象要被回收的时候，会把虚引用加入关联的队列里。</li>
+</ul>
+<p>GC Roots 是什么？<br>GC Roots 是一组重要对象的集合（虚拟机栈内的变量，静态变量，常量，本地方法栈中的变量,…）。<br>我们通常说的 GC Root 可达，指的就是对象被 GC Roots 对象集直接或者间接持有引用。<br>引用可能不止一个，只要有强引用，对象就不会被回收。如果是其他引用，就依据上面所说的不同类型引用的不同表现来判断是否需要回收了。</p>
+<h2 id="内存泄漏的"><a href="#内存泄漏的" class="headerlink" title="内存泄漏的"></a>内存泄漏的</h2><h2 id="内存泄漏有什么影响？"><a href="#内存泄漏有什么影响？" class="headerlink" title="内存泄漏有什么影响？"></a>内存泄漏有什么影响？</h2><p>  对于 Android 应用来说，内存泄漏是造成 OOM 的主要原因之一。由于 Android 系统为每个 APP 分配的内存是有限的，APP 内如果发生的内存泄漏较多，导致 APP 可用内存越来越少，在申请新的对象空间时就很容易发生内存溢出从而导致 APP 崩溃。</p>
+<!--more-->
+
+<h2 id="如何检测和分析内存泄漏"><a href="#如何检测和分析内存泄漏" class="headerlink" title="如何检测和分析内存泄漏"></a>如何检测和分析内存泄漏</h2><p>内存泄漏发生在堆内存上，对于我们来说并不可见，所以需要借助一些工具来检测。常用的工具有 MAT，LeakCanary。</p>
+<h2 id="常见的内存泄漏以及解决方法"><a href="#常见的内存泄漏以及解决方法" class="headerlink" title="常见的内存泄漏以及解决方法"></a>常见的内存泄漏以及解决方法</h2><h3 id="单例模式造成的内存泄漏"><a href="#单例模式造成的内存泄漏" class="headerlink" title="单例模式造成的内存泄漏"></a>单例模式造成的内存泄漏</h3><p>由于单例的静态特性（GC Root），如果一个对象 A 已经不再需要被使用，但是被单例所持有，就会导致 A 不能被回收，从而导致了内存泄漏。<br>在 Android 中最常见的就是单例模式传入了 Activity 的 Context。如果 Activity 不再需要，Activity 也不能被正常回收。</p>
+<p>解决方法：不管传入什么 Context，最终使用的是  Application 的 Context。这样就不会发生内存泄漏了</p>
+<h3 id="创建了一个非静态内部类的静态实例造成的内存泄漏"><a href="#创建了一个非静态内部类的静态实例造成的内存泄漏" class="headerlink" title="创建了一个非静态内部类的静态实例造成的内存泄漏"></a>创建了一个非静态内部类的静态实例造成的内存泄漏</h3><p>在 Activity 内有一个非静态的内部类 A，并且有一个 A 的静态实例。由于 A 是静态变量（GC Root对象）。而  A 是 Activity 的非静态内部类，A 会持有 Activity 的引用。这样就导致了，Activity 在可以被回收的时候，由于被 A 持有引用，而不能正常被回收，从而导致了内存泄漏。</p>
+<p>解决方法：额。就是尽量避免这种情况。。。如果有需求可以将 A 设置成静态内部类，或者将 A 抽离出来，形成单例。</p>
+<h3 id="Handler-造成的内存泄漏"><a href="#Handler-造成的内存泄漏" class="headerlink" title="Handler 造成的内存泄漏"></a>Handler 造成的内存泄漏</h3><p>Android UI 线程不能做耗时操作（联网请求等），如果需要执行的话，经常用到 Handler。耗时操作未结束，handler 就会一直被 message 持有引用，而 Handler 是 Activity 的匿名内部类，Handler 持有 Activity 的引用。所以只要消息没有被处理完，Activity 就不能被回收。</p>
+<p>这种内存泄漏其实还好，因为耗时操作总会结束，内存最终也会被释放。不过我们还是应该养成好的习惯，不以恶小而为之。我们可以自定义一个 Handler 的静态内部类，并通过弱引用来引用 Activity，就可以解决这个问题了。</p>
+<p>NOTE：最开始的时候，我疑惑过弱引用的使用，我当时想的是如果在耗时操作中，并没有退出 Activity ，而此时 GC 被触发了，那么对象不就没了吗？那不就有问题了？。。。额~ 后来发现是我忽略了 Activity 的多个引用，此时 Activity 对象不仅被 handler 弱引用持有，还有其他的强引用持有，是不会被回收的。除非用户主动退出 Activity，Activity 的强引用都没有了，只剩下 handler 的弱引用了，这时候弱引用就起作用了。所以是我多虑了。</p>
+<h3 id="线程造成的泄漏"><a href="#线程造成的泄漏" class="headerlink" title="线程造成的泄漏"></a>线程造成的泄漏</h3><p>原理和 Handler 造成的内存泄漏一致，AsyncTask 和 Runnable 的使用一般都是匿名内部类，如果线程中的任务未完成，Activity 销毁了。Activity 也不能被 GC 回收。</p>
+<p>解决方法：同上将 AsyncTask 和 Runnable 设置成静态内部类，并将 Activity 设置为弱引用。</p>
+<h3 id="资源未关闭造成的内存泄漏"><a href="#资源未关闭造成的内存泄漏" class="headerlink" title="资源未关闭造成的内存泄漏"></a>资源未关闭造成的内存泄漏</h3><p>对于 BroadcastReceiver，ContentObserver，File，Cursor，Streamd 等资源应该在 Activity 销毁的时候及时释放，关闭或注销。</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>内存</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>HashMap 结构相关</title>
     <url>/2017/12/28/HashMap%20%E7%9B%B8%E5%85%B3/</url>
     <content><![CDATA[<h3 id="HashMap"><a href="#HashMap" class="headerlink" title="HashMap"></a>HashMap</h3><h4 id="HashMap-的数据结构"><a href="#HashMap-的数据结构" class="headerlink" title="HashMap 的数据结构"></a>HashMap 的数据结构</h4><p>HashMap 的数据结构是 key-value。HashMap 存储的时候， key-value 是绑定在一起以 Entry 形式进行存储的。</p>
 <a id="more"></a>
 
-<h4 id="HashMap-的存储结构"><a href="#HashMap-的存储结构" class="headerlink" title="HashMap 的存储结构"></a>HashMap 的存储结构</h4><p>HashMap 的存储结构是一个 数组链表。理想的存储状态是数组的连续存储空间上，每个空间地址上只存有一项 Entry。</p>
+<h4 id="HashMap-的存储结构"><a href="#HashMap-的存储结构" class="headerlink" title="HashMap 的存储结构"></a>HashMap 的存储结构</h4><p>HashMap 的存储结构是一个 数组加链表。理想的存储状态是数组的连续存储空间上，每个空间地址上只存有一项 Entry。</p>
 <p>Entry 存储的时候，存储的空间地址是根据 key 的 hasCode 来计算 hash 值的。根据 hash 值得到 entry 在这个数组的下标。如果这个下标上已经有 entry 了（应该称作 hashMap 的碰撞），那么这个下标上的数据将以链表的形式存储，新的 entry 将作为链表的头，最先加入的 entry 放在链表的尾。如果这个下标上没有其他的数据，则直接将 entry 放到下标处。</p>
 <p>HasMap 的存储数组大小有一个默认大小，在 map 存储的数据快要超过数组大小的时候，HasMap 就要进行一次 resize，数组的大小将会扩大一倍。resize 的代价比较大，因为他会重新计算和分配已存储的所有数据的位置，默认的是在数据量达到数组大小 size * 0.75 的时候，就会进行 resize 操作。0.75 叫做负载因子。</p>
 <p>HashMap 在创建的时候是可以自定义数组大小和负载因子的。不传的话，默认数组大小为 16，负载因子为 0.75</p>
 <p>负载因子越大，空间利用率越高，但是查找效率会降低。负载因子越小，查找效率越高，空间利用率越低。</p>
 <h4 id="HashMap-不是线程安全的"><a href="#HashMap-不是线程安全的" class="headerlink" title="HashMap 不是线程安全的"></a>HashMap 不是线程安全的</h4><p>HashMap 不是线程安全的，如果在迭代过程中，有人修改了 map，就会抛出异常 ConcurrentModificationException</p>
-<h4 id="HashMap-的正确遍历"><a href="#HashMap-的正确遍历" class="headerlink" title="HashMap 的正确遍历"></a>HashMap 的正确遍历</h4><h5 id="第一种"><a href="#第一种" class="headerlink" title="第一种"></a>第一种</h5><figure class="highlight armasm"><table><tr><td class="code"><pre><span class="line">　　<span class="meta">Map</span> <span class="meta">map</span> = new HashMap()<span class="comment">;</span></span><br><span class="line">　　Iterator <span class="keyword">iter</span> = <span class="meta">map</span>.entrySet().iterator()<span class="comment">;</span></span><br><span class="line">　　<span class="meta">while</span> (iter.hasNext()) &#123;</span><br><span class="line">　　    <span class="meta">Map</span>.Entry <span class="meta">entry</span> = (<span class="meta">Map</span>.Entry) iter.next()<span class="comment">;</span></span><br><span class="line">    　　Object key = <span class="meta">entry</span>.getKey()<span class="comment">;</span></span><br><span class="line">　    　Object val = <span class="meta">entry</span>.getValue()<span class="comment">;</span></span><br><span class="line">　　&#125;</span><br></pre></td></tr></table></figure>
-<p>效率高，推荐使用这种方式</p>
-<h5 id="第二种"><a href="#第二种" class="headerlink" title="第二种"></a>第二种</h5><figure class="highlight processing"><table><tr><td class="code"><pre><span class="line">Map <span class="built_in">map</span> = <span class="keyword">new</span> <span class="keyword">HashMap</span>();</span><br><span class="line">Iterator iter = <span class="built_in">map</span>.keySet().iterator();</span><br><span class="line"><span class="keyword">while</span> (iter.hasNext()) &#123;</span><br><span class="line">    <span class="keyword">Object</span> <span class="built_in">key</span> = iter.next();</span><br><span class="line">    <span class="keyword">Object</span> val = <span class="built_in">map</span>.<span class="built_in">get</span>(<span class="built_in">key</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>效率低，以后尽量少使用</p>
 ]]></content>
       <categories>
         <category>数据结构</category>
